@@ -12,12 +12,12 @@ As opposed to how we've coded thus far, the database specifications needn't be c
 
 If you cannot find the above file, it's okay! Create a .env file at the aforementioned location and paste the following:
 
-        DEBUG=True \
-        SECRET_KEY='django-insecure-1*wp-#d+qexi5qd%-t-61u64s($1jnkvk&6o)r&2l9$%wz+3^a' \
-        DB_NAME=alyousuf \
-        DB_USER=ayadmin \
-        DB_PASSWORD=alyousuf123 \
-        DB_HOST=localhost \
+        DEBUG=True
+        SECRET_KEY='django-insecure-1*wp-#d+qexi5qd%-t-61u64s($1jnkvk&6o)r&2l9$%wz+3^a'
+        DB_NAME=alyousuf
+        DB_USER=ayadmin
+        DB_PASSWORD=alyousuf123
+        DB_HOST=localhost
         DB_PORT=
 
 The above will be what you'll be modelling your database on. Remember you'll need to create a database, a user and grant permission to the user.
