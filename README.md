@@ -6,7 +6,9 @@ After setting up the database and installing all the modules you'll need to run 
 
         export READ_DOT_ENV_FILE=True
 
-***For Windows Users: set READ_DOT_ENV_FILE=True***
+***For Windows Users:***
+
+        set READ_DOT_ENV_FILE=True
 
 As opposed to how we've coded thus far, the database specifications needn't be changed in settings.py, but in the .env file. This is the path for it from the base directory: 
 
