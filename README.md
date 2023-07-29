@@ -30,7 +30,7 @@ Set your database up according to how I did for the sake of consistency and to a
 
 If you face an error like this: 
 
-        ***django.core.exceptions.ImproperlyConfigured: Set the SECRET_KEY environment variable***
+        django.core.exceptions.ImproperlyConfigured: Set the SECRET_KEY environment variable
 
 chances are that your error lies in line 26 of settings.py. Uncommenting that line should make your project work.
 
