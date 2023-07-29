@@ -20,13 +20,13 @@ If you cannot find the above file, it's okay! Create a .env file at the aforemen
         DB_HOST=localhost
         DB_PORT=
 
-The above will be what you'll be modelling your database on. Remember you'll need to create a database, a user and grant permission to the user.
+The above will be what you'll be modelling your database on. Remember you'll need to create a database, a user and grant permission to the user. The database being used is PostgreSQL.
 
-You may define your own database or set it up according to how I did.
+Set your database up according to how I did for the sake of consistency and to avoid conflicts.
 
 If you face an error like this: ***django.core.exceptions.ImproperlyConfigured: Set the SECRET_KEY environment variable***,
 chances are that your error lies in line 26 of settings.py. Uncommenting that line should make your project work.
 
-I do encourage you to fork this project and play around with it to get a feel of it and the various functionalities I have implemented within it.
+I do encourage you to clone this project and play around with it to get a feel of it and the various functionalities I have implemented within it.
 
 Feel free to reach out to me in case of any doubts or clarifications :)
