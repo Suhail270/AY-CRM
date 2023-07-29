@@ -28,7 +28,10 @@ The above will be what you'll be modelling your database on. Remember you'll nee
 
 Set your database up according to how I did for the sake of consistency and to avoid conflicts.
 
-If you face an error like this: ***django.core.exceptions.ImproperlyConfigured: Set the SECRET_KEY environment variable***,
+If you face an error like this: 
+
+        ***django.core.exceptions.ImproperlyConfigured: Set the SECRET_KEY environment variable***
+
 chances are that your error lies in line 26 of settings.py. Uncommenting that line should make your project work.
 
 I do encourage you to clone this project and play around with it to get a feel of it and the various functionalities I have implemented within it.
