@@ -3,7 +3,8 @@
 After setting up the database and installing all the modules you'll need to run this app, you will need to run the following command in the terminal before you're able to run python manage.py runserver:
 
 ***For Mac/Linux Users:***
-                        export READ_DOT_ENV_FILE=True
+
+        export READ_DOT_ENV_FILE=True
 
 ***For Windows Users: set READ_DOT_ENV_FILE=True***
 
