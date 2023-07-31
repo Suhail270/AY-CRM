@@ -156,5 +156,4 @@ def post_user_created_signal(sender, instance, created, **kwargs):
     if created:
         UserProfile.objects.create(user=instance)
 
-
 post_save.connect(post_user_created_signal, sender=User)
