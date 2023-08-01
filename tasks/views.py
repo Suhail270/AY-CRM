@@ -57,16 +57,14 @@ class TaskListView(LoginRequiredMixin, generic.ListView):
         # initial queryset of leads for the entire organization
         if user.is_organizer:
             queryset = Task.objects.filter(
-                organization=user.userprofile, 
-                agent__isnull=False
+                organization=user.userprofile
             )
         else:
             queryset = Task.objects.filter(
-                organization=user.agent.organization, 
-                agent__isnull=False
+                organization=user.agent.organization
             )
             # filter for the agent that is logged in
-            queryset = queryset.filter(agent__user=user)
+            # queryset = queryset.filter(agent__user=user)
         return queryset
 
     def get_context_data(self, **kwargs):
