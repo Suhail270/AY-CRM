@@ -11,7 +11,13 @@ from .models import (User,
                      UserType, 
                      LeadSource,
                      Lookup_Names,
-                     Lookup_Name_Values)
+                     Lookup_Name_Values,
+                     Task,
+                     TaskAttendees,
+                     TravelTimeOptions,
+                     RepeatOptions,
+                     AlertOptions,
+                     CalendarDisplayOptions)
 
 
 
@@ -37,3 +43,9 @@ admin.site.register(UserType)
 admin.site.register(LeadSource)
 admin.site.register(Lookup_Names)
 admin.site.register(Lookup_Name_Values)
+admin.site.register(Task)
+admin.site.register(TaskAttendees)
+admin.site.register(TravelTimeOptions)
+admin.site.register(RepeatOptions)
+admin.site.register(AlertOptions)
+admin.site.register(CalendarDisplayOptions)
