@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.db import models
 from django.db.models.signals import post_save
 from django.contrib.auth.models import AbstractUser
@@ -173,9 +174,9 @@ class Task(models.Model):
     title = models.CharField(max_length=100, null=False, blank=False)
     location = models.CharField(max_length=100)
     all_day = models.BooleanField()
-    start_date = models.DateTimeField(default=datetime.now, null=False, blank=False)
+    start_date = models.DateField(default=timezone.now().date(), null=False, blank=False)
     start_time = models.TimeField(null=True, blank=True)
-    end_date = models.DateTimeField()
+    end_date = models.DateField(default=timezone.now().date(), null=False, blank=False)
     end_time = models.TimeField(null=True, blank=True)
     travel_time = models.ForeignKey(TravelTimeOptions, null=True, blank=True, on_delete=models.SET_NULL)
     repeat = models.ForeignKey(RepeatOptions, null=True, blank=True, on_delete=models.SET_NULL)
