@@ -11,7 +11,13 @@ from .models import (User,
                      UserType, 
                      LeadSource,
                      Lookup_Names,
-                     Lookup_Name_Values)
+                     Lookup_Name_Values,
+                     Task,
+                     TaskAttendees,
+                     TravelTimeOptions,
+                     RepeatOptions,
+                     AlertOptions,
+                     CalendarDisplayOptions)
 
 
 
