@@ -37,8 +37,6 @@ class TaskModelForm(forms.ModelForm):
     class Meta:
         model = Task
         fields = [
-            'owner',
-            'organization',
             'title',
             'location',
             'all_day',
@@ -55,15 +53,9 @@ class TaskModelForm(forms.ModelForm):
             'referenceNotes'
         ]
         widgets = {
-            # "owner": forms.HiddenInput( ),
-            # "organization": forms.HiddenInput(),
             "start_date": forms.DateInput(),
             "end_date": forms.DateInput(),
         }
-        # initial = {
-        #     "owner": "teasting",
-        #     "organization": "teastinggggg"
-        # }
 
     def clean_first_name(self):
         data = self.cleaned_data["first_name"]
