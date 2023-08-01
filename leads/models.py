@@ -156,35 +156,19 @@ class Lookup_Name_Values(models.Model):
 
 # Task Management:
 
-class TravelTimeOptions(models.Model):
-    option = models.CharField(max_length=100)
-
-class RepeatOptions(models.Model):
-    option = models.CharField(max_length=100)
-
-class AlertOptions(models.Model):
-    option = models.CharField(max_length=200)
-
-class CalendarDisplayOptions(models.Model):
+class TaskStatusOptions(models.Model):
     option = models.CharField(max_length=100)
 
 class Task(models.Model):
-    owner = models.CharField(max_length=100, null=False, blank=False)
-    organization = models.CharField(max_length=100, null=False, blank=False)
+    owner = models.ForeignKey(UserProfile, null=True, blank=False, on_delete=models.SET_NULL, related_name='owner')
+    organization =  models.ForeignKey(UserProfile, null=True, blank=False, on_delete=models.SET_NULL, related_name='organization')
     title = models.CharField(max_length=100, null=False, blank=False)
-    location = models.CharField(max_length=100)
-    all_day = models.BooleanField()
-    start_date = models.DateField(default=timezone.now().date(), null=False, blank=False)
-    start_time = models.TimeField(null=True, blank=True)
-    end_date = models.DateField(default=timezone.now().date(), null=False, blank=False)
-    end_time = models.TimeField(null=True, blank=True)
-    travel_time = models.ForeignKey(TravelTimeOptions, null=True, blank=True, on_delete=models.SET_NULL)
-    repeat = models.ForeignKey(RepeatOptions, null=True, blank=True, on_delete=models.SET_NULL)
+    designated_lead = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL, related_name='designatedLead')
+    start_date = models.DateTimeField(default=datetime.now, null=False, blank=False)
+    end_date = models.DateTimeField(null=True, blank=True)
     invitees = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL)
-    alert = models.ForeignKey(AlertOptions, null=True, blank=True, on_delete=models.SET_NULL)
-    showAs = models.ForeignKey(CalendarDisplayOptions, null=True, blank=True, on_delete=models.SET_NULL)
-    referenceURL = models.CharField(max_length=300)
-    referenceNotes = models.CharField(max_length=500)
+    status = models.ForeignKey(TaskStatusOptions, null=True, blank=True, on_delete=models.SET_NULL)
+    referenceNotes = models.CharField(max_length=500, null=True, blank=True)
 
 class TaskAttendees(models.Model):
     task = models.ForeignKey(Task, null=True, blank=True, on_delete=models.SET_NULL)
