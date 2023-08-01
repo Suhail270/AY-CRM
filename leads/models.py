@@ -169,6 +169,7 @@ class CalendarDisplayOptions(models.Model):
 
 class Task(models.Model):
     owner = models.CharField(max_length=100, null=False, blank=False)
+    organization = models.CharField(max_length=100, null=False, blank=False)
     title = models.CharField(max_length=100, null=False, blank=False)
     location = models.CharField(max_length=100)
     all_day = models.BooleanField()
