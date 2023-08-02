@@ -167,6 +167,7 @@ class Task(models.Model):
     title = models.CharField(max_length=100, null=False, blank=False)
     designated_lead = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL, related_name='designatedLead')
     start_date = models.DateTimeField(default=datetime.now, null=False, blank=False)
+    deadline = models.DateTimeField(null=True, blank=True)
     end_date = models.DateTimeField(null=True, blank=True)
     invitees = models.ManyToManyField(UserProfile)
     status = models.ForeignKey(TaskStatusOptions, null=True, blank=True, on_delete=models.SET_NULL)
