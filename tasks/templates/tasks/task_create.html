@@ -1,4 +1,3 @@
-<!-- task_create.html -->
 {% extends "base.html" %}
 {% load tailwind_filters %}
 
@@ -7,20 +6,11 @@
 <div class="max-w-lg mx-auto">
     <a class="hover:text-blue-500" href="{% url 'tasks:task-list' %}">Go back to tasks</a>
     <div class="py-5 border-t border-gray-200">
-        <h1 class="text-4xl text-gray-800">Create a new task</h1>
+        <h1 class="text-4xl text-gray-800">Create a new party</h1>
     </div>
     <form method="post" class="mt-5">
         {% csrf_token %}
-        <!-- Add your form fields here for creating a new task -->
-        <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="title">Title:</label>
-            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="title" type="text" name="title" required>
-        </div>
-        <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="description">Description:</label>
-            <textarea class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="description" name="description" rows="5" required></textarea>
-        </div>
-        <!-- Add any other form fields you need for your task creation -->
+        {{ form|crispy }}
         <button type='submit' class="w-full text-white bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded-md">
             Submit
         </button>
