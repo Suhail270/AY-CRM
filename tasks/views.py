@@ -38,7 +38,7 @@ class TaskCreateView(LoginRequiredMixin, generic.CreateView):
     def form_valid(self, form):
         task = form.save(commit=False)
         task.organization = str(self.request.user.userprofile)
-        task.owner = self.request.user.id
+        task.owner = self.request.user.userprofile
         task.save()
         # send_mail(
         #     subject="A lead has been created",

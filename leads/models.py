@@ -166,13 +166,13 @@ class Task(models.Model):
     designated_lead = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL, related_name='designatedLead')
     start_date = models.DateTimeField(default=datetime.now, null=False, blank=False)
     end_date = models.DateTimeField(null=True, blank=True)
-    invitees = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL)
+    deadline = models.DateTimeField(null=True, blank=True)
     status = models.ForeignKey(TaskStatusOptions, null=True, blank=True, on_delete=models.SET_NULL)
     referenceNotes = models.CharField(max_length=500, null=True, blank=True)
 
-class TaskAttendees(models.Model):
+class TaskParticipants(models.Model):
     task = models.ForeignKey(Task, null=True, blank=True, on_delete=models.SET_NULL)
-    attendee = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL)
+    participant = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL)
 
 def post_user_created_signal(sender, instance, created, **kwargs):
     if created:

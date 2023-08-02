@@ -13,11 +13,9 @@ from .models import (User,
                      Lookup_Names,
                      Lookup_Name_Values,
                      Task,
-                     TaskAttendees,
-                     TravelTimeOptions,
-                     RepeatOptions,
-                     AlertOptions,
-                     CalendarDisplayOptions)
+                     TaskParticipants,
+                     TaskStatusOptions,
+)
 
 
 
@@ -44,8 +42,5 @@ admin.site.register(LeadSource)
 admin.site.register(Lookup_Names)
 admin.site.register(Lookup_Name_Values)
 admin.site.register(Task)
-admin.site.register(TaskAttendees)
-admin.site.register(TravelTimeOptions)
-admin.site.register(RepeatOptions)
-admin.site.register(AlertOptions)
-admin.site.register(CalendarDisplayOptions)
+admin.site.register(TaskParticipants)
+admin.site.register(TaskStatusOptions)
