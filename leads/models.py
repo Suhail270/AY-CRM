@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.db import models
 from django.db.models.signals import post_save
 from django.contrib.auth.models import AbstractUser
@@ -182,7 +183,7 @@ class Task(models.Model):
 
 class TaskAttendees(models.Model):
     task = models.ForeignKey(Task, null=True, blank=True, on_delete=models.SET_NULL)
-    attendee = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL)
+    participant = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         return str(self.task.title) + " - " + str(self.attendee.user.username)
