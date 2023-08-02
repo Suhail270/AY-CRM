@@ -38,6 +38,9 @@
       <a href="{% url 'parties:party-list' %}" class="mr-5 hover:text-gray-900"
         >Parties</a
       >
+      <a href="{% url 'tasks:task-list' %}" class="mr-5 hover:text-gray-900"
+        >Tasks</a
+      >
       {% endif %}
     </nav>
     {% if request.user.is_authenticated %} Logged in as:
