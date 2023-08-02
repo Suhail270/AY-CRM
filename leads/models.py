@@ -161,18 +161,24 @@ class TaskStatusOptions(models.Model):
     
     def __str__(self):
         return str(self.option)
+    
+class RepeatOptions(models.Model):
+    option = models.CharField(max_length=100)
 
 class Task(models.Model):
     owner = models.ForeignKey(UserProfile, null=True, blank=False, on_delete=models.SET_NULL, related_name='owner')
     organization =  models.ForeignKey(UserProfile, null=True, blank=False, on_delete=models.SET_NULL, related_name='organization')
     title = models.CharField(max_length=100, null=False, blank=False)
     designated_lead = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL, related_name='designatedLead')
+    creation_date = models.DateTimeField(default=datetime.now, null=False, blank=False)
     start_date = models.DateTimeField(default=datetime.now, null=False, blank=False)
     deadline = models.DateTimeField(null=True, blank=True)
     end_date = models.DateTimeField(null=True, blank=True)
     invitees = models.ManyToManyField(UserProfile)
     status = models.ForeignKey(TaskStatusOptions, null=True, blank=True, on_delete=models.SET_NULL)
     referenceNotes = models.CharField(max_length=500, null=True, blank=True)
+    reminder = models.DateTimeField(null=True, blank=True)
+    repeat = models.ForeignKey(RepeatOptions, null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         if self.designated_lead:
