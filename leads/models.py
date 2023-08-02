@@ -174,7 +174,7 @@ class Task(models.Model):
     start_date = models.DateTimeField(default=datetime.now, null=False, blank=False)
     deadline = models.DateTimeField(null=True, blank=True)
     end_date = models.DateTimeField(null=True, blank=True)
-    invitees = models.ManyToManyField(UserProfile)
+    invitees = models.ManyToManyField(UserProfile, blank=True)
     status = models.ForeignKey(TaskStatusOptions, null=True, blank=True, on_delete=models.SET_NULL)
     referenceNotes = models.CharField(max_length=500, null=True, blank=True)
     reminder = models.DateTimeField(null=True, blank=True)
