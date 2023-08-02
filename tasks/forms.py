@@ -1,10 +1,5 @@
 from django import forms
-from leads.models import (Task,
-                        #   TravelTimeOptions,
-                        #   RepeatOptions,
-                        #   AlertOptions,
-                        #   CalendarDisplayOptions
-                          )
+from leads.models import (Task)
 
 # class TaskForm(forms.Form):
 #     title = forms.CharField(label="Title", max_length=100,  required=True)
@@ -38,18 +33,18 @@ class TaskModelForm(forms.ModelForm):
     class Meta:
         model = Task
         fields = [
-            'title',
-            'designated_lead',
-            'start_date',
-            'deadline',
-            'end_date',
-            'invitees',
-            'status',
-            'referenceNotes',
+            "title",
+            "designated_lead",
+            "deadline",
+            "invitees",
+            "status",
+            "referenceNotes",
+            "reminder",
+            "repeat"
         ]
         widgets = {
-            "start_date": forms.DateInput(),
-            "end_date": forms.DateInput(),
+            "reminder": forms.DateTimeInput(),
+            "deadline": forms.DateTimeInput()
         }
 
     def clean_first_name(self):

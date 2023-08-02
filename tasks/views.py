@@ -9,7 +9,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
 from django.views import generic
 from agents.mixins import OrganizerAndLoginRequiredMixin
-from leads.models import Task
+from leads.models import Task, Agent
 from .forms import (
     TaskModelForm
 )
@@ -37,7 +37,10 @@ class TaskCreateView(LoginRequiredMixin, generic.CreateView):
 
     def form_valid(self, form):
         task = form.save(commit=False)
-        task.organization = str(self.request.user.userprofile)
+        if self.request.user.is_organizer:
+            task.organization = self.request.user.userprofile
+        else:
+            task.organization = Agent.objects.get(user = self.request.user).organization
         task.owner = self.request.user.userprofile
         task.save()
         # send_mail(
