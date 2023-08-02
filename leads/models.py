@@ -158,6 +158,9 @@ class Lookup_Name_Values(models.Model):
 
 class TaskStatusOptions(models.Model):
     option = models.CharField(max_length=100)
+    
+    def __str__(self):
+        return str(self.option)
 
 class Task(models.Model):
     owner = models.ForeignKey(UserProfile, null=True, blank=False, on_delete=models.SET_NULL, related_name='owner')
@@ -165,14 +168,25 @@ class Task(models.Model):
     title = models.CharField(max_length=100, null=False, blank=False)
     designated_lead = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL, related_name='designatedLead')
     start_date = models.DateTimeField(default=datetime.now, null=False, blank=False)
-    end_date = models.DateTimeField(null=True, blank=True)
     deadline = models.DateTimeField(null=True, blank=True)
+    end_date = models.DateTimeField(null=True, blank=True)
+    invitees = models.ManyToManyField(UserProfile)
     status = models.ForeignKey(TaskStatusOptions, null=True, blank=True, on_delete=models.SET_NULL)
     referenceNotes = models.CharField(max_length=500, null=True, blank=True)
 
-class TaskParticipants(models.Model):
+    def __str__(self):
+        if self.designated_lead:
+            return str(self.title) + " | " + str(self.owner) + ": " + str(self.designated_lead)
+        else:
+            return str(self.title) + " | " + str(self.owner)
+        
+
+class TaskAttendees(models.Model):
     task = models.ForeignKey(Task, null=True, blank=True, on_delete=models.SET_NULL)
     participant = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL)
+
+    def __str__(self):
+        return str(self.task.title) + " - " + str(self.attendee.user.username)
 
 def post_user_created_signal(sender, instance, created, **kwargs):
     if created:

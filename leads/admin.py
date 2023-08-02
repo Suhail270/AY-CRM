@@ -12,10 +12,9 @@ from .models import (User,
                      LeadSource,
                      Lookup_Names,
                      Lookup_Name_Values,
+                     TaskAttendees,
                      Task,
-                     TaskParticipants,
-                     TaskStatusOptions,
-)
+                     TaskStatusOptions)
 
 
 
@@ -42,5 +41,5 @@ admin.site.register(LeadSource)
 admin.site.register(Lookup_Names)
 admin.site.register(Lookup_Name_Values)
 admin.site.register(Task)
-admin.site.register(TaskParticipants)
+admin.site.register(TaskAttendees)
 admin.site.register(TaskStatusOptions)
