@@ -1,0 +1,117 @@
+<!-- tasks_list.html -->
+{% extends "base.html" %}
+{% load tailwind_filters %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <a href="{% url 'tasks:task-create' %}" class="text-white bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded-md mb-4">Create a new task</a>
+    <div class="grid grid-cols-3 gap-4 mt-8">
+        <div class="column">
+            <div class="kanban-container" id="todo">
+            <h2 class="text-2xl font-bold mb-4">To Do</h2>
+                {% for task in todo_tasks %}
+                <div class="kanban-card" data-id="{{ task.id }}">
+                    <div class="kanban-card-title">{{ task.title }}</div>
+                    <div class="kanban-card-description">{{ task.description }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            
+        </div>
+
+        <div class="column">
+            <div class="kanban-container" id="in_progress">
+            <h2 class="text-2xl font-bold mb-4">In Progress</h2>
+                {% for task in in_progress_tasks %}
+                <div class="kanban-card" data-id="{{ task.id }}">
+                    <div class="kanban-card-title">{{ task.title }}</div>
+                    <div class="kanban-card-description">{{ task.description }}</div>
+                </div>
+                {% endfor %}
+            </div>
+
+        </div>
+
+        <div class="column">
+            <div class="kanban-container" id="done">
+            <h2 class="text-2xl font-bold mb-4">Done</h2>
+                {% for task in done_tasks %}
+                <div class="kanban-card" data-id="{{ task.id }}">
+                    <div class="kanban-card-title">{{ task.title }}</div>
+                    <div class="kanban-card-description">{{ task.description }}</div>
+                </div>
+                {% endfor %}
+            </div>            
+        </div>
+    </div>
+</div>
+<style>
+    .column {
+        flex: 1;
+    }
+
+    .grid {
+        display: grid;
+    }
+
+    .grid-cols-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    .table th,
+    .table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+
+    .table th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+    }
+
+    .kanban-container {
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 10px;
+        height: 400px;
+        overflow-y: auto;
+    }
+    .kanban-header {
+        padding: 10px;
+        border-radius: 5px 5px 0 0;
+        margin-bottom: 8px;
+    }
+
+    .kanban-card {
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 8px;
+        margin-bottom: 8px;
+    }
+    .table-scroll {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    .table-scroll th,
+    .table-scroll td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+
+    .table-scroll th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+    }
+
+</style>
+{% endblock content %}

@@ -84,3 +84,12 @@ class TaskListView(LoginRequiredMixin, generic.ListView):
         #         "unassigned_leads": queryset
         #     })
         return context
+    # views.py
+
+def task_list(request):
+    tasks = Task.objects.all()
+    todo_tasks = tasks.filter(status='TODO')
+    in_progress_tasks = tasks.filter(status='IN_PROGRESS')
+    done_tasks = tasks.filter(status='DONE')
+    return render(request, 'task_list.html', {'todo_tasks': todo_tasks, 'in_progress_tasks': in_progress_tasks, 'done_tasks': done_tasks})
+

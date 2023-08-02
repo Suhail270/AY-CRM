@@ -1,3 +1,4 @@
+<!-- task_create.html -->
 {% extends "base.html" %}
 {% load tailwind_filters %}
 
@@ -10,7 +11,16 @@
     </div>
     <form method="post" class="mt-5">
         {% csrf_token %}
-        {{ form|crispy }}
+        <!-- Add your form fields here for creating a new task -->
+        <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="title">Title:</label>
+            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="title" type="text" name="title" required>
+        </div>
+        <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="description">Description:</label>
+            <textarea class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="description" name="description" rows="5" required></textarea>
+        </div>
+        <!-- Add any other form fields you need for your task creation -->
         <button type='submit' class="w-full text-white bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded-md">
             Submit
         </button>
