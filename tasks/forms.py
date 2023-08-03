@@ -44,7 +44,8 @@ class TaskModelForm(forms.ModelForm):
         ]
         widgets = {
             "reminder": forms.DateTimeInput(),
-            "deadline": forms.DateTimeInput()
+            "deadline": forms.DateTimeInput(),
+            "invitees": forms.CheckboxSelectMultiple()
         }
 
     def clean_first_name(self):

@@ -9,7 +9,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
 from django.views import generic
 from agents.mixins import OrganizerAndLoginRequiredMixin
-from leads.models import Task, Agent, UserProfile, TaskStatusOptions
+from leads.models import Task, Agent, UserProfile,TaskStatusOptions
 from .forms import (
     TaskModelForm
 )
@@ -27,6 +27,15 @@ class TaskCreateView(OrganizerAndLoginRequiredMixin, generic.CreateView):
         # form.fields['agent'].queryset = Agent.objects.filter(
         #     organization=user.userprofile
         # )
+        # form.fields['party'].queryset = Parties.objects.filter(
+        #     organization=user.userprofile
+        # )
+        if user.is_agent:
+            org = Agent.objects.get(user = self.request.user).organization
+        elif user.is_organizer:
+            org = UserProfile.objects.get(user = self.request.user)
+        form.fields['designated_lead'].queryset = UserProfile.objects.filter()
+        # form.fields['invitees'].queryset = UserProfile
         return form
 
     def form_valid(self, form):
@@ -51,13 +60,15 @@ class TaskListView(LoginRequiredMixin, generic.ListView):
         user = self.request.user
         # initial queryset of leads for the entire organization
         if user.is_organizer:
-            queryset = Task.objects.all()
-            # queryset = queryset.filter(owner=UserProfile.objects.get(user = user))
+            queryset = Task.objects.filter(
+                organization=user.userprofile
+            )
         else:
-            queryset = Task.objects.all()
-            queryset = queryset.filter(owner=UserProfile.objects.get(user = user))
+            queryset = Task.objects.filter(
+                organization=user.agent.organization
+            )
             # filter for the agent that is logged in
-
+            queryset = queryset.filter(agent__user=user)
         return queryset
 
     def get_context_data(self, **kwargs):
