@@ -9,7 +9,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
 from django.views import generic
 from agents.mixins import OrganizerAndLoginRequiredMixin
-from leads.models import Task, Agent
+from leads.models import Task, Agent, UserProfile, TaskStatusOptions
 from .forms import (
     TaskModelForm
 )
@@ -52,20 +52,26 @@ class TaskListView(LoginRequiredMixin, generic.ListView):
         # initial queryset of leads for the entire organization
         if user.is_organizer:
             queryset = Task.objects.all()
+            # queryset = queryset.filter(owner=UserProfile.objects.get(user = user))
         else:
             queryset = Task.objects.all()
+            queryset = queryset.filter(owner=UserProfile.objects.get(user = user))
             # filter for the agent that is logged in
-            # queryset = queryset.filter(agent__user=user)
+
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super(TaskListView, self).get_context_data(**kwargs)
         user = self.request.user
         if user.is_organizer:
-            queryset = Task.objects.all()
-            # context.update({
-            #     "unassigned_parties": queryset
-            # })
+            querysetTODO = Task.objects.filter(status = TaskStatusOptions.objects.get(option = "TODO"))
+            querysetIN_PROGRESS = Task.objects.filter(status = TaskStatusOptions.objects.get(option = "IN_PROGRESS"))
+            querysetDONE = Task.objects.filter(status = TaskStatusOptions.objects.get(option = "DONE"))
+            context.update({
+                "task_todo": querysetTODO,
+                "task_in_progress":querysetIN_PROGRESS,
+                "task_done":querysetDONE
+            })
         return context
 
 
@@ -76,4 +82,21 @@ def task_list(request):
     done_tasks = tasks.filter(status='DONE')
     print("here---------------------")
     return render(request, 'task_list.html', {'todo_tasks': todo_tasks, 'in_progress_tasks': in_progress_tasks, 'done_tasks': done_tasks})
+
+class TaskDetailView(LoginRequiredMixin, generic.DetailView):
+    template_name = "tasks/task_detail.html"
+    context_object_name = "tasks"
+
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of leads for the entire organization
+        if user.is_organizer:
+            queryset = Task.objects.all()
+        else:
+            queryset = Task.objects.all()
+            queryset = queryset.filter(owner=UserProfile.objects.get(user = user))
+
+            # filter for the agent that is logged in
+            # queryset = queryset.filter(agent__user=user)
+        return queryset
 
