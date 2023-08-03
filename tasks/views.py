@@ -75,14 +75,25 @@ class TaskListView(LoginRequiredMixin, generic.ListView):
         context = super(TaskListView, self).get_context_data(**kwargs)
         user = self.request.user
         if user.is_organizer:
-            querysetTODO = Task.objects.filter(status = TaskStatusOptions.objects.get(option = "TODO"))
-            querysetIN_PROGRESS = Task.objects.filter(status = TaskStatusOptions.objects.get(option = "IN_PROGRESS"))
-            querysetDONE = Task.objects.filter(status = TaskStatusOptions.objects.get(option = "DONE"))
-            context.update({
-                "task_todo": querysetTODO,
-                "task_in_progress":querysetIN_PROGRESS,
-                "task_done":querysetDONE
-            })
+            try: 
+                querysetTODO = Task.objects.filter(status = TaskStatusOptions.objects.get(option = "TODO"))
+                querysetIN_PROGRESS = Task.objects.filter(status = TaskStatusOptions.objects.get(option = "IN_PROGRESS"))
+                querysetDONE = Task.objects.filter(status = TaskStatusOptions.objects.get(option = "DONE"))
+                context.update({
+                    "task_todo": querysetTODO,
+                    "task_in_progress":querysetIN_PROGRESS,
+                    "task_done":querysetDONE
+                })
+            except: 
+                querysetTODO = Task.objects.all()
+                querysetIN_PROGRESS = Task.objects.all()
+                querysetDONE = Task.objects.all()
+                context.update({
+                    "task_todo": querysetTODO,
+                    "task_in_progress":querysetIN_PROGRESS,
+                    "task_done":querysetDONE
+                })
+
         return context
 
 
