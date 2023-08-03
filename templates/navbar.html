@@ -38,6 +38,8 @@
       <a href="{% url 'parties:party-list' %}" class="mr-5 hover:text-gray-900"
         >Parties</a
       >
+      <a href="{% url 'leads:opportunity-list' %}" class="mr-5 hover:text-gray-900"
+      >Opportunities</a>
       {% endif %}
     </nav>
     {% if request.user.is_authenticated %} Logged in as:
