@@ -532,19 +532,29 @@ class OpportunityListView(LoginRequiredMixin, generic.ListView):
     
     def create_queryOpportunities(self, queryset):
         for lead in queryset:
-            # Create an Opportunity instance for each lead and set the relevant fields
-            opportunity = Opportunities()
-            opportunity.name = lead.name
-            opportunity.description = lead.description
-            opportunity.source = lead.source
-            opportunity.status = lead.status
-            opportunity.agent = lead.agent
-            opportunity.organization = lead.organization
-            opportunity.party = lead.party
-            opportunity.tenant_map_id = lead.tenant_map_id
+            existing_opportunity = Opportunities.objects.filter(
+            name=lead.name,
+            source=lead.source,
+            status=lead.status,
+            agent_id = lead.agent_id,
+            organization_id = lead.organization_id,
+            party_id = lead.party_id,
+            source_id = lead.source_id          
+        ).first()
+            if not existing_opportunity:
+                # Create an Opportunity instance for each lead and set the relevant fields
+                opportunity = Opportunities()
+                opportunity.name = lead.name
+                opportunity.description = lead.description
+                opportunity.source = lead.source
+                opportunity.status = lead.status
+                opportunity.agent = lead.agent
+                opportunity.organization = lead.organization
+                opportunity.party = lead.party
+                opportunity.tenant_map_id = lead.tenant_map_id
 
-            # Save the Opportunity instance to the database
-            opportunity.save()
-            
+                # Save the Opportunity instance to the database
+                opportunity.save()
+                
 
         
