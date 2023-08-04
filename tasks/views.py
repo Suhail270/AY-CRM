@@ -9,7 +9,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
 from django.views import generic
 from agents.mixins import OrganizerAndLoginRequiredMixin
-from leads.models import Task, Agent, UserProfile,TaskStatusOptions
+from leads.models import Task, Agent, UserProfile,TaskStatusOptions,Lead,RepeatOptions
 from .forms import (
     TaskModelForm
 )
@@ -34,7 +34,8 @@ class TaskCreateView(OrganizerAndLoginRequiredMixin, generic.CreateView):
             org = Agent.objects.get(user = self.request.user).organization
         elif user.is_organizer:
             org = UserProfile.objects.get(user = self.request.user)
-        form.fields['designated_lead'].queryset = UserProfile.objects.filter()
+        # form.fields['lead'].queryset = Lead.objects.filter(organization=user.userprofile)
+        form.fields['designated_agent'].queryset = UserProfile.objects.filter()
         # form.fields['invitees'].queryset = UserProfile
         return form
 
@@ -121,4 +122,52 @@ class TaskDetailView(LoginRequiredMixin, generic.DetailView):
             # filter for the agent that is logged in
             # queryset = queryset.filter(agent__user=user)
         return queryset
+    
+class TaskUpdateView(OrganizerAndLoginRequiredMixin, generic.UpdateView):
+    template_name = "tasks/task_update.html"
+    form_class = TaskModelForm
+    context_object_name = "tasks"
 
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of leads for the entire organization
+        queryset = Task.objects.all()
+        queryset = queryset.filter(owner=UserProfile.objects.get(user = user))
+        return queryset
+    
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        user = self.request.user
+        form.fields['lead'].querysey = Lead.objects.filter(
+            organization=user.userprofile
+        )
+        form.fields['designated_agent'].queryset = UserProfile.objects.filter(
+            # organization=user.userprofile
+        )
+        form.fields['status'].queryset = TaskStatusOptions.objects.all()
+        form.fields['repeat'].queryset = RepeatOptions.objects.all()
+        return form
+
+    def get_success_url(self):
+        return reverse("tasks:task-list")
+
+    def form_valid(self, form):
+        party_before_update = self.get_object()
+        instance = form.save(commit=False)
+        messages.info(self.request, "You have successfully updated this task")
+        # if party_before_update.last_updated_date != datetime.datetime.now():
+        #         # this lead has now been converted
+        #         instance.last_updated_date = datetime.datetime.now()
+        instance.save()
+        return super(TaskUpdateView, self).form_valid(form)
+
+class TaskDeleteView(OrganizerAndLoginRequiredMixin, generic.DeleteView):
+    template_name = "tasks/task_delete.html"
+
+    def get_success_url(self):
+        return reverse("tasks:task-list")
+
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of parties for the entire organization
+        return Task.objects.all()
