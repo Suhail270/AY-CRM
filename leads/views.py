@@ -9,7 +9,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
 from django.views import generic
 from agents.mixins import OrganizerAndLoginRequiredMixin
-from .models import Lead, Agent, Category, FollowUp, Parties, Opportunities
+from .models import Lead, Agent, Category, FollowUp, Parties ,Opportunities
 from .forms import (
     LeadForm, 
     LeadModelForm, 

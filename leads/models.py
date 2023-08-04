@@ -199,9 +199,6 @@ def post_user_created_signal(sender, instance, created, **kwargs):
     if created:
         UserProfile.objects.create(user=instance)
 
-
-
-
 class Opportunities(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField()
@@ -234,6 +231,5 @@ class Contacts(models.Model):
 
     def _str_(self):
         return f"{self.first_name} {self.last_name}"
-    
 
 post_save.connect(post_user_created_signal, sender=User)

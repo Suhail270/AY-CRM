@@ -14,7 +14,7 @@ from .forms import (
     TaskModelForm
 )
 
-class TaskCreateView(OrganizerAndLoginRequiredMixin, generic.CreateView):
+class TaskCreateView(LoginRequiredMixin, generic.CreateView):
     template_name = "tasks/task_create.html"
     form_class = TaskModelForm
 
@@ -32,16 +32,34 @@ class TaskCreateView(OrganizerAndLoginRequiredMixin, generic.CreateView):
         # )
         if user.is_agent:
             org = Agent.objects.get(user = self.request.user).organization
+            form.fields['designated_agent'].queryset = UserProfile.objects.filter(user = user)
+            form.fields['invitees'].queryset = UserProfile.objects.filter(user = user)
         elif user.is_organizer:
             org = UserProfile.objects.get(user = self.request.user)
+            form.fields['designated_agent'].queryset = UserProfile.objects.filter()
         # form.fields['lead'].queryset = Lead.objects.filter(organization=user.userprofile)
-        form.fields['designated_agent'].queryset = UserProfile.objects.filter()
+        
         # form.fields['invitees'].queryset = UserProfile
         return form
 
     def form_valid(self, form):
         task = form.save(commit=False)
-        task.owner = self.request.user.userprofile
+        user = self.request.user
+        if user.is_organizer:
+            task.owner = self.request.user.userprofile
+        elif user.is_agent:
+            task.owner = self.request.user.agent.organization
+            task.designated_agent = self.request.user.userprofile
+
+        try: 
+            task.organization = self.request.user.agent.organization
+        except: 
+            pass
+        try:
+            task.status = TaskStatusOptions.objects.get(option = "TODO")
+        except Exception as e: 
+            print(e)
+            pass
         task.save()
         send_mail(
             subject="A task has been created",
@@ -59,6 +77,7 @@ class TaskListView(LoginRequiredMixin, generic.ListView):
 
     def get_queryset(self):
         user = self.request.user
+        
         # initial queryset of leads for the entire organization
         if user.is_organizer:
             queryset = Task.objects.filter(
@@ -68,8 +87,9 @@ class TaskListView(LoginRequiredMixin, generic.ListView):
             queryset = Task.objects.filter(
                 organization=user.agent.organization
             )
+            
             # filter for the agent that is logged in
-            queryset = queryset.filter(agent__user=user)
+            queryset = queryset.filter(designated_agent=user.userprofile)
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -80,6 +100,7 @@ class TaskListView(LoginRequiredMixin, generic.ListView):
                 querysetTODO = Task.objects.filter(status = TaskStatusOptions.objects.get(option = "TODO"))
                 querysetIN_PROGRESS = Task.objects.filter(status = TaskStatusOptions.objects.get(option = "IN_PROGRESS"))
                 querysetDONE = Task.objects.filter(status = TaskStatusOptions.objects.get(option = "DONE"))
+                
                 context.update({
                     "task_todo": querysetTODO,
                     "task_in_progress":querysetIN_PROGRESS,
@@ -95,6 +116,33 @@ class TaskListView(LoginRequiredMixin, generic.ListView):
                     "task_done":querysetDONE
                 })
 
+        else:
+            queryset = Task.objects.filter(
+                designated_agent=user.userprofile
+            )
+            
+            try: 
+                querysetTODO = queryset.filter(status = TaskStatusOptions.objects.get(option = "TODO"))
+                querysetIN_PROGRESS = queryset.filter(status = TaskStatusOptions.objects.get(option = "IN_PROGRESS"))
+                querysetDONE = queryset.filter(status = TaskStatusOptions.objects.get(option = "DONE"))
+                
+                context.update({
+                    "task_todo": querysetTODO,
+                    "task_in_progress":querysetIN_PROGRESS,
+                    "task_done":querysetDONE
+                })
+            except: 
+                querysetTODO = queryset.all()
+                querysetIN_PROGRESS = queryset.all()
+                querysetDONE = queryset.all()
+                context.update({
+                    "task_todo": querysetTODO,
+                    "task_in_progress":querysetIN_PROGRESS,
+                    "task_done":querysetDONE
+                })
+
+            
+    
         return context
 
 
@@ -117,13 +165,13 @@ class TaskDetailView(LoginRequiredMixin, generic.DetailView):
             queryset = Task.objects.all()
         else:
             queryset = Task.objects.all()
-            queryset = queryset.filter(owner=UserProfile.objects.get(user = user))
+            queryset = queryset.filter(designated_agent=UserProfile.objects.get(user = user))
 
             # filter for the agent that is logged in
             # queryset = queryset.filter(agent__user=user)
         return queryset
     
-class TaskUpdateView(OrganizerAndLoginRequiredMixin, generic.UpdateView):
+class TaskUpdateView(LoginRequiredMixin, generic.UpdateView):
     template_name = "tasks/task_update.html"
     form_class = TaskModelForm
     context_object_name = "tasks"
@@ -132,7 +180,8 @@ class TaskUpdateView(OrganizerAndLoginRequiredMixin, generic.UpdateView):
         user = self.request.user
         # initial queryset of leads for the entire organization
         queryset = Task.objects.all()
-        queryset = queryset.filter(owner=UserProfile.objects.get(user = user))
+        if user.is_agent:
+            queryset = queryset.filter(designated_agent=UserProfile.objects.get(user = user))
         return queryset
     
     def get_form(self, form_class=None):
@@ -152,12 +201,13 @@ class TaskUpdateView(OrganizerAndLoginRequiredMixin, generic.UpdateView):
         return reverse("tasks:task-list")
 
     def form_valid(self, form):
-        party_before_update = self.get_object()
+        updatedTask = self.get_object()
         instance = form.save(commit=False)
         messages.info(self.request, "You have successfully updated this task")
-        # if party_before_update.last_updated_date != datetime.datetime.now():
-        #         # this lead has now been converted
-        #         instance.last_updated_date = datetime.datetime.now()
+        if instance.status == TaskStatusOptions.objects.get(option = "DONE"):
+                # this task has now been completed
+                if(instance.end_date == None):
+                    instance.end_date = datetime.datetime.now()
         instance.save()
         return super(TaskUpdateView, self).form_valid(form)
 

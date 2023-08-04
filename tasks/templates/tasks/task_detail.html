@@ -30,7 +30,12 @@
 
                 <div class="flex border-t border-gray-300 py-2">
                     <span class="text-gray-500">designated_lead</span>
-                    <span class="ml-auto text-gray-900">{{ tasks.designated_lead }}</span>
+                    <span class="ml-auto text-gray-900">
+                        <a class="text-blue-500 hover:text-blue-800" 
+                        href="{% url 'leads:lead-detail' tasks.lead.pk  %}">
+                            {{ tasks.lead }}
+                        </a>
+                    </span>
                 </div>
 
                 <div class="flex border-t border-gray-300 py-2">
