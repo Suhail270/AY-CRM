@@ -15,7 +15,7 @@ from .models import (User,
                      TaskAttendees,
                      Task,
                      TaskStatusOptions,
-                     RepeatOptions)
+                     RepeatOptions,Opportunities,Contacts)
 
 
 
@@ -45,3 +45,6 @@ admin.site.register(Task)
 admin.site.register(TaskAttendees)
 admin.site.register(TaskStatusOptions)
 admin.site.register(RepeatOptions)
+admin.site.register(Opportunities)
+admin.site.register(Contacts)
+
