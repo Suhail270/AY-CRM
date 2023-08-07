@@ -68,7 +68,7 @@ class Parties(models.Model):
 class Lead(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField()
-    status = models.ForeignKey("Category", null=True, on_delete=models.SET_NULL, default='New')
+    status = models.ForeignKey("Category", null=True, on_delete=models.SET_NULL)
     organization = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL)
     source = models.ForeignKey(LeadSource, null=True, blank=False, on_delete=models.SET_NULL)
     agent = models.ForeignKey("Agent", null=True, blank=True, on_delete=models.SET_NULL)
@@ -169,20 +169,21 @@ class Task(models.Model):
     owner = models.ForeignKey(UserProfile, null=True, blank=False, on_delete=models.SET_NULL, related_name='owner')
     organization =  models.ForeignKey(UserProfile, null=True, blank=False, on_delete=models.SET_NULL, related_name='organization')
     title = models.CharField(max_length=100, null=False, blank=False)
-    designated_lead = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL, related_name='designatedLead')
+    designated_agent = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL, related_name='designatedAgent')
     creation_date = models.DateTimeField(default=datetime.now, null=False, blank=False)
     start_date = models.DateTimeField(default=datetime.now, null=False, blank=False)
     deadline = models.DateTimeField(null=True, blank=True)
     end_date = models.DateTimeField(null=True, blank=True)
-    invitees = models.ManyToManyField(UserProfile)
+    invitees = models.ManyToManyField(UserProfile, blank=True)
     status = models.ForeignKey(TaskStatusOptions, null=True, blank=True, on_delete=models.SET_NULL)
     referenceNotes = models.CharField(max_length=500, null=True, blank=True)
     reminder = models.DateTimeField(null=True, blank=True)
     repeat = models.ForeignKey(RepeatOptions, null=True, blank=True, on_delete=models.SET_NULL)
+    lead = models.ForeignKey("Lead", null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
-        if self.designated_lead:
-            return str(self.title) + " | " + str(self.owner) + ": " + str(self.designated_lead)
+        if self.designated_agent:
+            return str(self.title) + " | " + str(self.owner) + ": " + str(self.designated_agent)
         else:
             return str(self.title) + " | " + str(self.owner)
         
@@ -197,5 +198,38 @@ class TaskAttendees(models.Model):
 def post_user_created_signal(sender, instance, created, **kwargs):
     if created:
         UserProfile.objects.create(user=instance)
+
+class Opportunities(models.Model):
+    name = models.CharField(max_length=200)
+    description = models.TextField()
+    status = models.ForeignKey("Category", null=True, on_delete=models.SET_NULL)
+    organization = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL)
+    source = models.ForeignKey(LeadSource, null=True, blank=False, on_delete=models.SET_NULL)
+    agent = models.ForeignKey("Agent", null=True, blank=True, on_delete=models.SET_NULL)
+    created_date = models.DateTimeField(default=datetime.now)
+    last_updated_date = models.DateTimeField(default=datetime.now)
+    converted_date = models.DateTimeField(null=True, blank=True)
+
+    party = models.ForeignKey("Parties", related_name="opportunities", null=True, blank=False, on_delete=models.SET_NULL)
+    tenant_map_id = models.IntegerField(default=1)
+
+    objects = LeadManager()
+
+    def _str_(self):
+        return f"{self.name}"
+    
+class Contacts(models.Model):
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    user_type = models.ForeignKey(UserType, null=True, blank=True, on_delete=models.SET_NULL) # Individual, Organization
+    primary_number = models.CharField(max_length=30)
+    whatsapp_number = models.CharField(max_length=30)
+    email = models.EmailField()
+    preferred_contact_method = models.ForeignKey("PreferredContact", null=True, blank=True, on_delete=models.SET_NULL) # Email, WhatsApp, Call
+
+    objects = LeadManager()
+
+    def _str_(self):
+        return f"{self.first_name} {self.last_name}"
 
 post_save.connect(post_user_created_signal, sender=User)

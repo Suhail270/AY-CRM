@@ -31,10 +31,11 @@ from leads.models import (Task)
 
 class TaskModelForm(forms.ModelForm):
     class Meta:
-        model = Task
+        model = Task 
         fields = [
             "title",
-            "designated_lead",
+            "lead",
+            "designated_agent",
             "deadline",
             "invitees",
             "status",
@@ -44,7 +45,8 @@ class TaskModelForm(forms.ModelForm):
         ]
         widgets = {
             "reminder": forms.DateTimeInput(),
-            "deadline": forms.DateTimeInput()
+            "deadline": forms.DateTimeInput(),
+            "invitees": forms.CheckboxSelectMultiple()
         }
 
     def clean_first_name(self):
