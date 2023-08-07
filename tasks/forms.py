@@ -31,10 +31,11 @@ from leads.models import (Task)
 
 class TaskModelForm(forms.ModelForm):
     class Meta:
-        model = Task
+        model = Task 
         fields = [
             "title",
-            "designated_lead",
+            "lead",
+            "designated_agent",
             "deadline",
             "invitees",
             "status",
