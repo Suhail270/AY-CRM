@@ -154,6 +154,92 @@ def task_list(request):
     print("here---------------------")
     return render(request, 'task_list.html', {'todo_tasks': todo_tasks, 'in_progress_tasks': in_progress_tasks, 'done_tasks': done_tasks})
 
+class  TaskNotificationView(LoginRequiredMixin, generic.ListView):
+    template_name = "tasks/task_notification.html"
+    context_object_name = "tasks"
+
+    def get_queryset(self):
+        user = self.request.user
+        
+        # initial queryset of leads for the entire organization
+        if user.is_organizer:
+            queryset = Task.objects.filter(
+                organization=user.userprofile
+            )
+        else:
+            queryset = Task.objects.filter(
+                organization=user.agent.organization
+            )
+            
+            # filter for the agent that is logged in
+            queryset = queryset.filter(designated_agent=user.userprofile)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super(TaskNotificationView, self).get_context_data(**kwargs)
+        user = self.request.user
+        if user.is_organizer:
+            try: 
+                querysetTODO = Task.objects.filter(status = TaskStatusOptions.objects.get(option = "TODO"))
+                querysetIN_PROGRESS = Task.objects.filter(status = TaskStatusOptions.objects.get(option = "IN_PROGRESS"))
+                querysetDONE = Task.objects.filter(status = TaskStatusOptions.objects.get(option = "DONE"))
+                
+                context.update({
+                    "task_todo": querysetTODO,
+                    "task_in_progress":querysetIN_PROGRESS,
+                    "task_done":querysetDONE
+                })
+            except: 
+                querysetTODO = Task.objects.all()
+                querysetIN_PROGRESS = Task.objects.all()
+                querysetDONE = Task.objects.all()
+                context.update({
+                    "task_todo": querysetTODO,
+                    "task_in_progress":querysetIN_PROGRESS,
+                    "task_done":querysetDONE
+                })
+
+        else:
+            queryset = Task.objects.filter(
+                designated_agent=user.userprofile
+            )
+            
+            try: 
+                querysetTODO = queryset.filter(status = TaskStatusOptions.objects.get(option = "TODO"))
+                querysetIN_PROGRESS = queryset.filter(status = TaskStatusOptions.objects.get(option = "IN_PROGRESS"))
+                querysetDONE = queryset.filter(status = TaskStatusOptions.objects.get(option = "DONE"))
+                
+                context.update({
+                    "task_todo": querysetTODO,
+                    "task_in_progress":querysetIN_PROGRESS,
+                    "task_done":querysetDONE
+                })
+            except: 
+                querysetTODO = queryset.all()
+                querysetIN_PROGRESS = queryset.all()
+                querysetDONE = queryset.all()
+                context.update({
+                    "task_todo": querysetTODO,
+                    "task_in_progress":querysetIN_PROGRESS,
+                    "task_done":querysetDONE
+                })
+
+            
+    
+        return context
+
+
+def task_list(request):
+    tasks = Task.objects.all()
+    todo_tasks = tasks.filter(status='TODO')
+    in_progress_tasks = tasks.filter(status='IN_PROGRESS')
+    done_tasks = tasks.filter(status='DONE')
+    print("here---------------------")
+    return render(request, 'task_list.html', {'todo_tasks': todo_tasks, 'in_progress_tasks': in_progress_tasks, 'done_tasks': done_tasks})
+
+
+
+
 class TaskDetailView(LoginRequiredMixin, generic.DetailView):
     template_name = "tasks/task_detail.html"
     context_object_name = "tasks"
@@ -221,3 +307,4 @@ class TaskDeleteView(OrganizerAndLoginRequiredMixin, generic.DeleteView):
         user = self.request.user
         # initial queryset of parties for the entire organization
         return Task.objects.all()
+    

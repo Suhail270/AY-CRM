@@ -52,6 +52,10 @@
             </div>
 
         <a href="{% url 'leads:lead-followup-create' lead.pk %}" class="text-white bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded-md">Add a followup</a>
+        <a class="text-white bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded-md mr-2"
+          href="{% url 'tasks:task-create' %}" >
+          Create New Task
+        </a>
 
         </div>
 
@@ -100,4 +104,11 @@
 
     </div>
   </section>
+<style>
+
+    .mr-2 {
+    margin-left: 30px; 
+}
+</style>
+
 {% endblock content %}
