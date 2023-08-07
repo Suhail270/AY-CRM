@@ -2,18 +2,22 @@ import logging
 import datetime
 from django import contrib
 from django.contrib import messages
-from django.core.mail import send_mail
+from django.core.mail import send_mail, get_connection
+from django.shortcuts import get_object_or_404, redirect, render
+from django.core.mail.backends import console
 from django.http.response import JsonResponse
 from django.shortcuts import render, redirect, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.views import generic
 from agents.mixins import OrganizerAndLoginRequiredMixin
-from leads.models import Task, Agent, UserProfile,TaskStatusOptions,Lead,RepeatOptions
+from .tokens import generate_token, verify_token
+from leads.models import Task, Agent, UserProfile, TaskAttendees, TaskStatusOptions, Lead, RepeatOptions
 from .forms import (
     TaskModelForm
 )
 
+print('task create view')
 class TaskCreateView(LoginRequiredMixin, generic.CreateView):
     template_name = "tasks/task_create.html"
     form_class = TaskModelForm
@@ -61,14 +65,47 @@ class TaskCreateView(LoginRequiredMixin, generic.CreateView):
             print(e)
             pass
         task.save()
-        send_mail(
-            subject="A task has been created",
-            message="Go to the site to see the new task",
-            from_email="test@test.com",
-            recipient_list=["test2@test.com"]
-        )
-        messages.success(self.request, "You have successfully created a task")
+        # send_mail(
+        #     subject="A lead has been created",
+        #     message="Go to the site to see the new lead",
+        #     from_email="test@test.com",
+        #     recipient_list=["test2@test.com"]
+        # )
+
+        #Sending "EMAILS"
+        invited_user_ids = self.request.POST.getlist('invitees')
+        invited_user_emails = []
+        
+        connection = get_connection(backend='django.core.mail.backends.console.EmailBackend')
+
+        for id in invited_user_ids:
+            invitee_user = UserProfile.objects.filter(user_id=id).first()
+            accept_invite_link = self.request.build_absolute_uri(reverse("tasks:accept-invite", args=[task.id, generate_token(id)]))
+
+            if invitee_user:
+                invited_user_emails.append(invitee_user.user.email)
+                
+                for email in invited_user_emails:
+                    #"EMAIL" content
+                    subject = f"You're invited to work on {task.title}"
+                    message = f"You have been invited to work on the task: '{task.title}'. Click on the link below to accept. {accept_invite_link}"
+                    from_email = "lisa@gmail.com"
+                    recipient_list = [email]
+                    send_mail(subject, message, from_email, recipient_list, fail_silently=False, connection=connection)
+
+        messages.success(self.request, "You have successfully created a task and sent invites")
         return super(TaskCreateView, self).form_valid(form)
+    
+    def accept_invite(request, task_id, token):
+        task = get_object_or_404(Task, pk=task_id)
+
+        participant_id = verify_token(token)
+        if participant_id is None:
+            return HttpResponseBadRequest("Invalid token")
+        
+        participant_profile = UserProfile.objects.get(id=participant_id)
+        TaskAttendees.objects.create(task=task, participant=participant_profile)
+        return render(request, 'tasks/invitation_accepted.html', {'task': task})
 
 
 class TaskListView(LoginRequiredMixin, generic.ListView):

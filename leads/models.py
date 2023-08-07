@@ -193,7 +193,7 @@ class TaskAttendees(models.Model):
     participant = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
-        return str(self.task.title) + " - " + str(self.attendee.user.username)
+        return str(self.task.title) + " - " + str(self.participant.user.username)
 
 def post_user_created_signal(sender, instance, created, **kwargs):
     if created:
