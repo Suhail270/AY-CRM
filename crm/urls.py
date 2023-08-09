@@ -22,6 +22,7 @@ urlpatterns = [
     path('agents/',  include('agents.urls', namespace="agents")),
     path('parties/',  include('parties.urls', namespace="parties")),
     path('tasks/',  include('tasks.urls', namespace="tasks")),
+    path('kpis/',  include('kpis.urls', namespace="kpis")),
     path('signup/', SignupView.as_view(), name='signup'),
     path('reset-password/', PasswordResetView.as_view(), name='reset-password'),
     path('password-reset-done/', PasswordResetDoneView.as_view(), name='password_reset_done'),

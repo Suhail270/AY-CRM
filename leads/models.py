@@ -68,7 +68,7 @@ class Parties(models.Model):
 class Lead(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField()
-    status = models.ForeignKey("Category", null=True, on_delete=models.SET_NULL, default='New')
+    status = models.ForeignKey("Category", null=True, on_delete=models.SET_NULL)
     organization = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL)
     source = models.ForeignKey(LeadSource, null=True, blank=False, on_delete=models.SET_NULL)
     agent = models.ForeignKey("Agent", null=True, blank=True, on_delete=models.SET_NULL)
@@ -169,7 +169,6 @@ class Task(models.Model):
     owner = models.ForeignKey(UserProfile, null=True, blank=False, on_delete=models.SET_NULL, related_name='owner')
     organization =  models.ForeignKey(UserProfile, null=True, blank=False, on_delete=models.SET_NULL, related_name='organization')
     title = models.CharField(max_length=100, null=False, blank=False)
-    lead = models.ForeignKey(Lead, null=True, blank=True, on_delete=models.SET_NULL)
     designated_agent = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL, related_name='designatedAgent')
     creation_date = models.DateTimeField(default=datetime.now, null=False, blank=False)
     start_date = models.DateTimeField(default=datetime.now, null=False, blank=False)
@@ -180,6 +179,7 @@ class Task(models.Model):
     referenceNotes = models.CharField(max_length=500, null=True, blank=True)
     reminder = models.DateTimeField(null=True, blank=True)
     repeat = models.ForeignKey(RepeatOptions, null=True, blank=True, on_delete=models.SET_NULL)
+    lead = models.ForeignKey("Lead", null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         if self.designated_agent:
@@ -264,6 +264,7 @@ class Targets(models.Model):
     agent = models.ForeignKey("Agent", null=True, blank=True, on_delete=models.SET_NULL)
     organization = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL)
 
+
 def post_user_created_signal(sender, instance, created, **kwargs):
     if created:
         UserProfile.objects.create(user=instance)
@@ -271,7 +272,7 @@ def post_user_created_signal(sender, instance, created, **kwargs):
 class Opportunities(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField()
-    status = models.ForeignKey("Category", null=True, on_delete=models.SET_NULL, default='New')
+    status = models.ForeignKey("Category", null=True, on_delete=models.SET_NULL)
     organization = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL)
     source = models.ForeignKey(LeadSource, null=True, blank=False, on_delete=models.SET_NULL)
     agent = models.ForeignKey("Agent", null=True, blank=True, on_delete=models.SET_NULL)

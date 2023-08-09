@@ -22,7 +22,10 @@ from .models import (User,
                      Condition2,
                      ConditionOperator,
                      KPI,
-                     Targets,)
+                     Targets,
+                     RepeatOptions,
+                     Opportunities,
+                     Contacts)
 
 
 
@@ -59,4 +62,7 @@ admin.site.register(Condition2)
 admin.site.register(ConditionOperator)
 admin.site.register(KPI)
 admin.site.register(Targets)
+admin.site.register(RepeatOptions)
+admin.site.register(Opportunities)
+admin.site.register(Contacts)
 
