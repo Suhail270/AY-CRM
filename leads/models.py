@@ -255,6 +255,16 @@ class KPI(models.Model):
     def __str__(self):
         return str(self.name) + " | Lead: " + str(self.kpi_lead.name)
 
+class Targets(models.Model):
+    time_period_choices = (("Daily","Daily"), ("Weekly", "Weekly"), ("Monthly","Monthly"), ("Yearly","Yearly"))
+
+    name = models.CharField(max_length=100)
+    related_kpi = models.ForeignKey(KPI, null=True, blank=True, on_delete=models.SET_NULL)
+    time_period = models.CharField(max_length=100, choices=time_period_choices)
+    agent = models.ForeignKey("Agent", null=True, blank=True, on_delete=models.SET_NULL)
+    organization = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL)
+
+
 def post_user_created_signal(sender, instance, created, **kwargs):
     if created:
         UserProfile.objects.create(user=instance)
