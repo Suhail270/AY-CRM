@@ -11,13 +11,13 @@
                     View categories
                 </a>
             </div>
-            {% if request.user.is_organizer %}
+            {% comment %} {% if request.user.is_organizer %} {% endcomment %}
             <div>
                 <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:lead-create' %}">
                     Create a new lead
                 </a>
             </div>
-            {% endif %}
+            {% comment %} {% endif %} {% endcomment %}
         </div>
 
         <div class="flex flex-col w-full">

@@ -195,6 +195,75 @@ class TaskAttendees(models.Model):
     def __str__(self):
         return str(self.task.title) + " - " + str(self.participant.user.username)
 
+
+
+'''the name, the module (in our case the only option would be leads since theres no deals yet), 
+record selection, points per record, points recipient, and filter (conditions).
+
+I think conditions should be a foreign key to a different table, with the fields: field, operator (eg., is equal, is larger), and value'''
+
+# KPI
+
+class RecordSelection(models.Model):
+    option = models.CharField(max_length=100)
+    
+    def __str__(self):
+        return str(self.option)
+    
+class RecordSelectionRange(models.Model):
+    option = models.CharField(max_length=100)
+    
+    def __str__(self):
+        return str(self.option)
+    
+class Recipient(models.Model):
+    option = models.CharField(max_length=100)
+    
+    def __str__(self):
+        return str(self.option)
+    
+class Condition1(models.Model):
+    option = models.CharField(max_length=100)
+    
+    def __str__(self):
+        return str(self.option)
+    
+class Condition2(models.Model):
+    option = models.CharField(max_length=100)
+    
+    def __str__(self):
+        return str(self.option)
+    
+class ConditionOperator(models.Model):
+    option = models.CharField(max_length=100)
+    
+    def __str__(self):
+        return str(self.option)
+
+class KPI(models.Model):
+    name = models.CharField(max_length=100)
+    kpi_lead = models.ForeignKey(Lead, null=True, blank=True, on_delete = models.SET_NULL)
+    record_selection = models.ForeignKey(RecordSelection, null=True, blank=True, on_delete = models.SET_NULL)
+    record_selection_range = models.ForeignKey(RecordSelectionRange, null=True, blank=True, on_delete = models.SET_NULL)
+    condition1 = models.ForeignKey(Condition1, null= True, blank=True, on_delete=models.SET_NULL)
+    conditionOp = models.ForeignKey(ConditionOperator, null= True, blank=True, on_delete=models.SET_NULL)
+    condition2 = models.ForeignKey(Condition2, null= True, blank=True, on_delete=models.SET_NULL)
+    points_per_record = models.IntegerField(default=1)
+    points_valueOfField = models.BooleanField(default=False, null=True, blank=True)
+    recipient = models.ForeignKey(Recipient, null=True, blank=True, on_delete = models.SET_NULL)
+
+    def __str__(self):
+        return str(self.name) + " | Lead: " + str(self.kpi_lead.name)
+
+class Targets(models.Model):
+    time_period_choices = (("Daily","Daily"), ("Weekly", "Weekly"), ("Monthly","Monthly"), ("Yearly","Yearly"))
+
+    name = models.CharField(max_length=100)
+    related_kpi = models.ForeignKey(KPI, null=True, blank=True, on_delete=models.SET_NULL)
+    time_period = models.CharField(max_length=100, choices=time_period_choices)
+    agent = models.ForeignKey("Agent", null=True, blank=True, on_delete=models.SET_NULL)
+    organization = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL)
+
 def post_user_created_signal(sender, instance, created, **kwargs):
     if created:
         UserProfile.objects.create(user=instance)
