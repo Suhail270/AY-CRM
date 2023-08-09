@@ -19,6 +19,7 @@ from .forms import (
     CategoryModelForm,
     FollowUpModelForm
 )
+from django.db.models import Q
 
 
 logger = logging.getLogger(__name__)
@@ -117,6 +118,7 @@ class LeadListView(LoginRequiredMixin, generic.ListView):
             )
             # filter for the agent that is logged in
             queryset = queryset.filter(agent__user=user)
+            
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -160,20 +162,47 @@ class LeadCreateView(LoginRequiredMixin, generic.CreateView):
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         user = self.request.user
-        form.fields['status'].queryset = Category.objects.filter(
+
+        # Agent.objects.filter(user=user)[0].organization
+
+        if user.is_organizer:
+            form.fields['status'].queryset = Category.objects.filter(
             organization=user.userprofile
-        )
-        form.fields['agent'].queryset = Agent.objects.filter(
-            organization=user.userprofile
-        )
-        form.fields['party'].queryset = Parties.objects.filter(
-            organization=user.userprofile
-        )
+            )
+            form.fields['agent'].queryset = Agent.objects.filter(
+                organization=user.userprofile
+            )
+            form.fields['party'].queryset = Parties.objects.filter(
+                organization=user.userprofile
+            )
+        
+        else:
+            organization = Agent.objects.filter(user=user)[0].organization
+
+            form.fields['status'].queryset = Category.objects.filter(
+            organization=organization
+            )
+            form.fields['agent'].queryset = Agent.objects.filter(
+                user=user
+            )
+            form.fields['party'].queryset = Parties.objects.filter(
+                organization=organization
+            ).filter(Q(agent=Agent.objects.filter(user=user)[0]) | Q(agent=None))
+            
         return form
 
     def form_valid(self, form):
         lead = form.save(commit=False)
-        lead.organization = self.request.user.userprofile
+
+        if not self.request.user.is_organizer:
+            lead.organization = Agent.objects.filter(user=self.request.user)[0].organization
+            lead.agent = Agent.objects.filter(
+                user=self.request.user
+            )[0]
+        
+        else:
+            lead.organization = self.request.user.userprofile
+
         lead.save()
         send_mail(
             subject="A lead has been created",
@@ -191,7 +220,10 @@ class LeadUpdateView(LoginRequiredMixin, generic.UpdateView):
     def get_queryset(self):
         user = self.request.user
         # initial queryset of leads for the entire organization
-        return Lead.objects.filter(organization=user.userprofile)
+        if user.is_organizer:
+            return Lead.objects.filter(organization=user.userprofile)
+        else:
+            return Lead.objects.filter(organization=Agent.objects.filter(user=user)[0].organization)
 
     def get_success_url(self):
         return reverse("leads:lead-list")
@@ -199,15 +231,31 @@ class LeadUpdateView(LoginRequiredMixin, generic.UpdateView):
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         user = self.request.user
-        form.fields['status'].queryset = Category.objects.filter(
+        
+        if user.is_organizer:
+            form.fields['status'].queryset = Category.objects.filter(
             organization=user.userprofile
-        )
-        form.fields['agent'].queryset = Agent.objects.filter(
-            organization=user.userprofile
-        )
-        form.fields['party'].queryset = Parties.objects.filter(
-            organization=user.userprofile
-        )
+            )
+            form.fields['agent'].queryset = Agent.objects.filter(
+                organization=user.userprofile
+            )
+            form.fields['party'].queryset = Parties.objects.filter(
+                organization=user.userprofile
+            )
+        
+        else:
+            organization = Agent.objects.filter(user=user)[0].organization
+
+            form.fields['status'].queryset = Category.objects.filter(
+            organization=organization
+            )
+            form.fields['agent'].queryset = Agent.objects.filter(
+                user=user
+            )
+            form.fields['party'].queryset = Parties.objects.filter(
+                organization=organization
+            ).filter(Q(agent=Agent.objects.filter(user=user)[0]) | Q(agent=None))
+
         return form
 
     def form_valid(self, form):
@@ -219,7 +267,6 @@ class LeadUpdateView(LoginRequiredMixin, generic.UpdateView):
                 instance.last_updated_date = datetime.datetime.now()
         instance.save()
         return super(LeadUpdateView, self).form_valid(form)
-
 
 
 class LeadDeleteView(OrganizerAndLoginRequiredMixin, generic.DeleteView):

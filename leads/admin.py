@@ -15,7 +15,16 @@ from .models import (User,
                      TaskAttendees,
                      Task,
                      TaskStatusOptions,
-                     RepeatOptions,Opportunities,Contacts)
+                     RecordSelection,
+                     RecordSelectionRange,
+                     Recipient,
+                     Condition1,
+                     Condition2,
+                     ConditionOperator,
+                     KPI,
+                     RepeatOptions,
+                     Opportunities,
+                     Contacts)
 
 
 
@@ -44,6 +53,13 @@ admin.site.register(Lookup_Name_Values)
 admin.site.register(Task)
 admin.site.register(TaskAttendees)
 admin.site.register(TaskStatusOptions)
+admin.site.register(RecordSelection)
+admin.site.register(RecordSelectionRange)
+admin.site.register(Recipient)
+admin.site.register(Condition1)
+admin.site.register(Condition2)
+admin.site.register(ConditionOperator)
+admin.site.register(KPI)
 admin.site.register(RepeatOptions)
 admin.site.register(Opportunities)
 admin.site.register(Contacts)
