@@ -259,9 +259,11 @@ class Targets(models.Model):
     time_period_choices = (("Daily","Daily"), ("Weekly", "Weekly"), ("Monthly","Monthly"), ("Yearly","Yearly"))
 
     name = models.CharField(max_length=100)
-    related_kpi = models.ForeignKey(KPI, null=True, blank=True, on_delete=models.SET_NULL)
+    related_kpi = models.ForeignKey(KPI, null=False, blank=False, on_delete=models.SET_NULL)
     time_period = models.CharField(max_length=100, choices=time_period_choices)
-    agent = models.ForeignKey("Agent", null=True, blank=True, on_delete=models.SET_NULL)
+    for_org = models.BooleanField(default=False, null=True, blank=True)
+    # agent = models.ForeignKey("Agent", null=True, blank=True, on_delete=models.SET_NULL)
+    agent = models.ManyToManyField(UserProfile, blank=True)
     organization = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL)
 
 
