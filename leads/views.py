@@ -9,7 +9,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
 from django.views import generic
 from agents.mixins import OrganizerAndLoginRequiredMixin
-from .models import Lead, Agent, Category, FollowUp, Parties
+from .models import Lead, Agent, Category, FollowUp, Parties ,Opportunities
 from .forms import (
     LeadForm, 
     LeadModelForm, 
@@ -552,3 +552,56 @@ class LeadJsonView(generic.View):
         return JsonResponse({
             "qs": qs,
         })
+    
+
+class OpportunityListView(LoginRequiredMixin, generic.ListView):
+    template_name = "leads/opportunity_list.html"
+    context_object_name = "opportunities"
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = Lead.objects.filter(
+            party__isnull = False,
+            party__first_name__isnull = False,
+            party__email__isnull = False,
+            party__primary_number__isnull = False
+        ) | Lead.objects.filter(
+            party__isnull = False,
+            party__first_name__isnull = False,
+            party__email__isnull = False,
+            party__whatsapp_number__isnull = False
+        )
+        self.create_queryOpportunities(queryset)
+        queryset2 = Opportunities.objects.filter(
+            party__isnull = False,
+        )
+        return queryset2
+    
+    def create_queryOpportunities(self, queryset):
+        for lead in queryset:
+            existing_opportunity = Opportunities.objects.filter(
+            name=lead.name,
+            source=lead.source,
+            status=lead.status,
+            agent_id = lead.agent_id,
+            organization_id = lead.organization_id,
+            party_id = lead.party_id,
+            source_id = lead.source_id          
+        ).first()
+            if not existing_opportunity:
+                # Create an Opportunity instance for each lead and set the relevant fields
+                opportunity = Opportunities()
+                opportunity.name = lead.name
+                opportunity.description = lead.description
+                opportunity.source = lead.source
+                opportunity.status = lead.status
+                opportunity.agent = lead.agent
+                opportunity.organization = lead.organization
+                opportunity.party = lead.party
+                opportunity.tenant_map_id = lead.tenant_map_id
+
+                # Save the Opportunity instance to the database
+                opportunity.save()
+                
+
+        
