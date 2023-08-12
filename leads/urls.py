@@ -29,5 +29,4 @@ urlpatterns = [
     path('opportunities/', OpportunityListView.as_view(), name='opportunity-list'),
 
 
-
 ]
