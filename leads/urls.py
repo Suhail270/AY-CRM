@@ -4,7 +4,7 @@ from .views import (
     LeadListView, LeadDetailView, LeadCreateView, LeadUpdateView, LeadDeleteView,
     AssignAgentView, CategoryListView, CategoryDetailView, LeadCategoryUpdateView,
     CategoryCreateView, CategoryUpdateView, CategoryDeleteView, LeadJsonView, 
-    FollowUpCreateView, FollowUpUpdateView, FollowUpDeleteView, OpportunityListView
+    FollowUpCreateView, FollowUpUpdateView, FollowUpDeleteView, OpportunityListView, OpportunityConvertView
 )
 
 app_name = "leads"
@@ -27,6 +27,7 @@ urlpatterns = [
     path('categories/<int:pk>/delete/', CategoryDeleteView.as_view(), name='category-delete'),
     path('create-category/', CategoryCreateView.as_view(), name='category-create'),
     path('opportunities/', OpportunityListView.as_view(), name='opportunity-list'),
+    path('<int:pk>/opportunities/convert/', OpportunityConvertView.as_view(), name='opportunity-convert'),
 
 
 ]
