@@ -17,7 +17,8 @@ from .forms import (
     AssignAgentForm, 
     LeadCategoryUpdateForm,
     CategoryModelForm,
-    FollowUpModelForm
+    FollowUpModelForm,
+    OpportunityModelForm
 )
 from django.db.models import Q
 
@@ -554,54 +555,131 @@ class LeadJsonView(generic.View):
         })
     
 
+# class OpportunityListView(LoginRequiredMixin, generic.ListView):
+#     template_name = "leads/opportunity_list.html"
+#     context_object_name = "opportunities"
+
+#     def get_queryset(self):
+#         user = self.request.user
+#         queryset = Lead.objects.filter(
+#             party__isnull = False,
+#             party__first_name__isnull = False,
+#             party__email__isnull = False,
+#             party__primary_number__isnull = False
+#         ) | Lead.objects.filter(
+#             party__isnull = False,
+#             party__first_name__isnull = False,
+#             party__email__isnull = False,
+#             party__whatsapp_number__isnull = False
+#         )
+#         self.create_queryOpportunities(queryset)
+#         queryset2 = Opportunities.objects.filter(
+#             party__isnull = False,
+#         )
+#         return queryset2
+    
+#     def create_queryOpportunities(self, queryset):
+#         for lead in queryset:
+#             existing_opportunity = Opportunities.objects.filter(
+#             name=lead.name,
+#             source=lead.source,
+#             status=lead.status,
+#             agent_id = lead.agent_id,
+#             organization_id = lead.organization_id,
+#             party_id = lead.party_id,
+#             source_id = lead.source_id          
+#         ).first()
+#             if not existing_opportunity:
+#                 # Create an Opportunity instance for each lead and set the relevant fields
+#                 opportunity = Opportunities()
+#                 opportunity.name = lead.name
+#                 opportunity.description = lead.description
+#                 opportunity.source = lead.source
+#                 opportunity.status = lead.status
+#                 opportunity.agent = lead.agent
+#                 opportunity.organization = lead.organization
+#                 opportunity.party = lead.party
+#                 opportunity.tenant_map_id = lead.tenant_map_id
+
+#                 # Save the Opportunity instance to the database
+#                 opportunity.save()
+
 class OpportunityListView(LoginRequiredMixin, generic.ListView):
     template_name = "leads/opportunity_list.html"
     context_object_name = "opportunities"
 
     def get_queryset(self):
         user = self.request.user
-        queryset = Lead.objects.filter(
-            party__isnull = False,
-            party__first_name__isnull = False,
-            party__email__isnull = False,
-            party__primary_number__isnull = False
-        ) | Lead.objects.filter(
-            party__isnull = False,
-            party__first_name__isnull = False,
-            party__email__isnull = False,
-            party__whatsapp_number__isnull = False
-        )
-        self.create_queryOpportunities(queryset)
-        queryset2 = Opportunities.objects.filter(
-            party__isnull = False,
-        )
-        return queryset2
-    
-    def create_queryOpportunities(self, queryset):
-        for lead in queryset:
-            existing_opportunity = Opportunities.objects.filter(
-            name=lead.name,
-            source=lead.source,
-            status=lead.status,
-            agent_id = lead.agent_id,
-            organization_id = lead.organization_id,
-            party_id = lead.party_id,
-            source_id = lead.source_id          
-        ).first()
-            if not existing_opportunity:
-                # Create an Opportunity instance for each lead and set the relevant fields
-                opportunity = Opportunities()
-                opportunity.name = lead.name
-                opportunity.description = lead.description
-                opportunity.source = lead.source
-                opportunity.status = lead.status
-                opportunity.agent = lead.agent
-                opportunity.organization = lead.organization
-                opportunity.party = lead.party
-                opportunity.tenant_map_id = lead.tenant_map_id
+        # initial queryset of leads for the entire organization
+        if user.is_organizer:
+            queryset = Opportunities.objects.filter(
+                organization=user.userprofile, 
+                agent__isnull=False
+            )
+        else:
+            queryset = Opportunities.objects.filter(
+                organization=user.agent.organization, 
+                agent__isnull=False
+            )
+            # filter for the agent that is logged in
+            queryset = queryset.filter(agent__user=user)
+            
+        return queryset
 
-                # Save the Opportunity instance to the database
-                opportunity.save()
-                
+    def get_context_data(self, **kwargs):
+        context = super(OpportunityListView, self).get_context_data(**kwargs)
+        user = self.request.user
+        if user.is_organizer:
+            queryset = Opportunities.objects.filter(
+                organization=user.userprofile, 
+                agent__isnull=True
+            )
+            # context.update({
+            #     "unassigned_leads": queryset
+            # })
+        return context
 
-        
+              
+
+class OpportunityConvertView(LoginRequiredMixin, generic.CreateView):
+    template_name = "leads/opportunity_convert.html"
+    form_class = OpportunityModelForm
+
+    def get_success_url(self):
+        return reverse("leads:lead-detail", kwargs={"pk": self.kwargs["pk"]})
+
+    def get_context_data(self, **kwargs):
+        context = super(OpportunityConvertView, self).get_context_data(**kwargs)
+        curr_lead = Lead.objects.get(pk=self.kwargs["pk"])
+        curr_party = curr_lead.party
+        context.update({
+
+            "name": curr_lead.name,
+            "description": curr_lead.description,
+            "status": Category.objects.get(name="Converted"),
+            "organization" : curr_lead.organization,
+            "source": curr_lead.source,
+            "agent": curr_lead.agent,
+            "party": curr_lead.party,
+            "converted_date" : datetime.datetime.now,
+            "tenant_map_id" : curr_lead.tenant_map_id,
+            
+        })
+        return context
+
+    def form_valid(self, form):
+        curr_lead = Lead.objects.get(pk=self.kwargs["pk"])
+        opportunity = form.save(commit=False)
+        opportunity.name = curr_lead.name
+        opportunity.description = curr_lead.description
+        opportunity.status = Category.objects.get(name="Converted")
+        opportunity.organization = curr_lead.organization
+        opportunity.source = curr_lead.source
+        opportunity.agent = curr_lead.agent
+        opportunity.party = curr_lead.party
+        opportunity.tenant_map_id = curr_lead.tenant_map_id
+        opportunity.converted_date = datetime.datetime.now()
+        opportunity.save()
+        return super(OpportunityConvertView, self).form_valid(form)
+
+   

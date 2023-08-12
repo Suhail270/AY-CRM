@@ -281,7 +281,7 @@ class Opportunities(models.Model):
     created_date = models.DateTimeField(default=datetime.now)
     last_updated_date = models.DateTimeField(default=datetime.now)
     converted_date = models.DateTimeField(null=True, blank=True)
-
+    deal_amount = models.IntegerField(null = True, blank=True)
     party = models.ForeignKey("Parties", related_name="opportunities", null=True, blank=False, on_delete=models.SET_NULL)
     tenant_map_id = models.IntegerField(default=1)
 

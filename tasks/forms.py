@@ -34,7 +34,7 @@ class TaskModelForm(forms.ModelForm):
         model = Task 
         fields = [
             "title",
-            "lead",
+            # "lead",
             "designated_agent",
             "deadline",
             "invitees",
@@ -44,8 +44,8 @@ class TaskModelForm(forms.ModelForm):
             "repeat"
         ]
         widgets = {
-            "reminder": forms.DateTimeInput(),
-            "deadline": forms.DateTimeInput(),
+            "reminder": forms.SelectDateWidget(),
+            "deadline": forms.SelectDateWidget(),
             "invitees": forms.CheckboxSelectMultiple()
         }
 
