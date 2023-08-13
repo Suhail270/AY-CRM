@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, reverse
 from django.views import generic
 from leads.models import KPI, Targets, Lead, LeadSource
 from django.forms.models import model_to_dict
@@ -35,12 +35,14 @@ def load_cond2(request):
         field_vals = []
     else:
         field_vals = foreign.objects.all()
-    # if field == "source":
-    #     field_vals = LeadSource.objects.all()
-    # else:
-    #     field_vals = [0]
     print(field_vals)
-    return render(request, 'kpis/kpi_dropdown_cond2.html', {'field_vals': field_vals})
+    dics = []
+    for field_val in field_vals:
+        dic = model_to_dict(field_val)
+        dic['str'] = str(field_val)
+        dics.append(dic)
+        print(dic)
+    return render(request, 'kpis/kpi_dropdown_cond2.html', {'field_vals': dics})
 
 class KpiListView(generic.ListView):
     template_name = "kpis/kpi_list.html"
@@ -53,9 +55,15 @@ class KpiListView(generic.ListView):
             value = 0
             if str(kpi.conditionOp) == "is":
                 field = str(kpi.condition1)
-                field_val_foreign = str(kpi.condition2)
-                field_val = None
-                value = Lead.objects.filter(**{field: field_val})
+                val = kpi.condition2
+                # field_val_foreign = str(kpi.condition2)
+                # field_val = Lead.objects.filter(**{})
+
+                field_val = get_foreign(Lead, field).objects.get(pk=kpi.condition2)
+                print(field_val)
+                
+                value = Lead.objects.filter(**{field: field_val}).count()
+                print(Lead.objects.filter(source=field_val))
             dic = model_to_dict(kpi)
             dic['value'] = value
             queryset.append(dic)
@@ -66,10 +74,19 @@ class KpiCreateView(generic.CreateView):
     template_name = "kpis/kpi_create.html"
     form_class = KpiModelForm
 
+    def get_success_url(self):
+        return reverse("kpis:kpi-list")
+
     def get_form(self, form_class=None):
         print([f.name for f in KPI._meta.get_fields()])
         form = super().get_form(form_class)
         return form
+
+    def form_valid(self, form):
+        print(self.request.POST)
+        kpi = form.save(commit=False)
+        kpi.save()
+        return super(KpiCreateView, self).form_valid(form)
 
 
 class TargetListView(generic.ListView):

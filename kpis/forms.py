@@ -26,10 +26,12 @@ class KpiModelForm(forms.ModelForm):
             "recipient",
             "condition1",
             "conditionOp",
-            "condition2"
+            "condition2",
+            "organization"
         ]
         widgets = {
-            "condition2": forms.Select()
+            "condition2": forms.Select(),
+            "points_valueOfField": forms.CheckboxInput()
         }
 
     def clean(self):

@@ -251,6 +251,8 @@ class KPI(models.Model):
     points_per_record = models.IntegerField(default=1)
     points_valueOfField = models.BooleanField(default=False, null=True, blank=True)
     recipient = models.ForeignKey(Recipient, null=True, blank=True, on_delete = models.SET_NULL)
+    organization = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL)
+    
 
     # def __str__(self):
     #     return str(self.name) + " | Lead: " + str(self.kpi_lead.name)
