@@ -1,0 +1,4 @@
+<option value="">---------</option>
+{% for field_val in field_vals %}
+<option value="{{ field_val.pk }}">{{ field_val.type }}</option>
+{% endfor %}

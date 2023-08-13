@@ -242,18 +242,21 @@ class ConditionOperator(models.Model):
 
 class KPI(models.Model):
     name = models.CharField(max_length=100)
-    kpi_lead = models.ForeignKey(Lead, null=True, blank=True, on_delete = models.SET_NULL)
+    # kpi_lead = models.ForeignKey(Lead, null=True, blank=True, on_delete = models.SET_NULL)
     record_selection = models.ForeignKey(RecordSelection, null=True, blank=True, on_delete = models.SET_NULL)
     record_selection_range = models.ForeignKey(RecordSelectionRange, null=True, blank=True, on_delete = models.SET_NULL)
     condition1 = models.ForeignKey(Condition1, null= True, blank=True, on_delete=models.SET_NULL)
     conditionOp = models.ForeignKey(ConditionOperator, null= True, blank=True, on_delete=models.SET_NULL)
-    condition2 = models.ForeignKey(Condition2, null= True, blank=True, on_delete=models.SET_NULL)
+    condition2 = models.IntegerField(blank=True, null=True)
     points_per_record = models.IntegerField(default=1)
     points_valueOfField = models.BooleanField(default=False, null=True, blank=True)
     recipient = models.ForeignKey(Recipient, null=True, blank=True, on_delete = models.SET_NULL)
 
+    # def __str__(self):
+    #     return str(self.name) + " | Lead: " + str(self.kpi_lead.name)
+
     def __str__(self):
-        return str(self.name) + " | Lead: " + str(self.kpi_lead.name)
+        return str(self.name)
 
 class Targets(models.Model):
     time_period_choices = (("Daily","Daily"), ("Weekly", "Weekly"), ("Monthly","Monthly"), ("Yearly","Yearly"))
