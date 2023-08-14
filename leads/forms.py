@@ -2,7 +2,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm, UsernameField
-from .models import Lead, Agent, Category, FollowUp, Parties
+from .models import Lead, Agent, Category, FollowUp, Parties,Opportunities
 
 User = get_user_model()
 
@@ -80,3 +80,17 @@ class FollowUpModelForm(forms.ModelForm):
             'notes',
             'file'
         )
+
+class OpportunityModelForm(forms.ModelForm):
+    class Meta:
+        model = Opportunities
+        fields = (
+            # 'name',
+            # 'description',
+            # 'status',
+            # 'source',
+            # 'agent',
+            # 'party',
+            'deal_amount',
+        )
+

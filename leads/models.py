@@ -242,18 +242,35 @@ class ConditionOperator(models.Model):
 
 class KPI(models.Model):
     name = models.CharField(max_length=100)
-    kpi_lead = models.ForeignKey(Lead, null=True, blank=True, on_delete = models.SET_NULL)
+    # kpi_lead = models.ForeignKey(Lead, null=True, blank=True, on_delete = models.SET_NULL)
     record_selection = models.ForeignKey(RecordSelection, null=True, blank=True, on_delete = models.SET_NULL)
     record_selection_range = models.ForeignKey(RecordSelectionRange, null=True, blank=True, on_delete = models.SET_NULL)
     condition1 = models.ForeignKey(Condition1, null= True, blank=True, on_delete=models.SET_NULL)
     conditionOp = models.ForeignKey(ConditionOperator, null= True, blank=True, on_delete=models.SET_NULL)
-    condition2 = models.ForeignKey(Condition2, null= True, blank=True, on_delete=models.SET_NULL)
+    condition2 = models.IntegerField(blank=True, null=True)
     points_per_record = models.IntegerField(default=1)
     points_valueOfField = models.BooleanField(default=False, null=True, blank=True)
     recipient = models.ForeignKey(Recipient, null=True, blank=True, on_delete = models.SET_NULL)
+    organization = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL)
+    
+
+    # def __str__(self):
+    #     return str(self.name) + " | Lead: " + str(self.kpi_lead.name)
 
     def __str__(self):
-        return str(self.name) + " | Lead: " + str(self.kpi_lead.name)
+        return str(self.name)
+
+class Targets(models.Model):
+    time_period_choices = (("Daily","Daily"), ("Weekly", "Weekly"), ("Monthly","Monthly"), ("Yearly","Yearly"))
+
+    name = models.CharField(max_length=100)
+    related_kpi = models.ForeignKey(KPI, null=False, blank=False, on_delete=models.CASCADE)
+    time_period = models.CharField(max_length=100, choices=time_period_choices)
+    for_org = models.BooleanField(default=False, null=True, blank=True)
+    # agent = models.ForeignKey("Agent", null=True, blank=True, on_delete=models.SET_NULL)
+    agents = models.ManyToManyField(UserProfile, blank=True, related_name="agents")
+    organization = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL, related_name="org")
+
 
 def post_user_created_signal(sender, instance, created, **kwargs):
     if created:
@@ -269,7 +286,7 @@ class Opportunities(models.Model):
     created_date = models.DateTimeField(default=datetime.now)
     last_updated_date = models.DateTimeField(default=datetime.now)
     converted_date = models.DateTimeField(null=True, blank=True)
-
+    deal_amount = models.IntegerField(null = True, blank=True)
     party = models.ForeignKey("Parties", related_name="opportunities", null=True, blank=False, on_delete=models.SET_NULL)
     tenant_map_id = models.IntegerField(default=1)
 

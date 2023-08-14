@@ -35,6 +35,9 @@
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Party
                             </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Deal Amount
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -56,7 +59,10 @@
                                     {{ opportunity.agent }}
                                 </td>
                                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <a class="text-blue-500 hover:text-blue-800" href="{% url 'parties:party-detail' opportunity.pk %}">{{ lead.party }}</a>
+                                    <a class="text-blue-500 hover:text-blue-800" href="{% url 'parties:party-detail' opportunity.party.pk %}">{{ opportunity.party }}</a>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ opportunity.deal_amount }}
                                 </td>
                             </tr>
 

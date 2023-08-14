@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'agents',
     'parties',
     'tasks',
+    'kpis'
 ]
 
 MIDDLEWARE = [

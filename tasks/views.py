@@ -23,17 +23,18 @@ class TaskCreateView(LoginRequiredMixin, generic.CreateView):
     form_class = TaskModelForm
 
     def get_success_url(self):
-        return reverse("tasks:task-list")
+        print("--------------->")
+        print(self.kwargs["pk"])
+        print("-------------------->")
+        return reverse("leads:lead-detail", kwargs={"pk": self.kwargs["pk"]})
     
     def get_form(self, form_class=None):
+        print("--------------->!!!!!!!!!!!!!!!!!!!")
+        print(self.kwargs["pk"])
+        print("-------------------->!!!!!!!!!!!!!!!!")
         form = super().get_form(form_class)
+        # form.fields['lead'].queryset = Lead.objects.filter(pk = self.kwargs["pk"])
         user = self.request.user
-        # form.fields['agent'].queryset = Agent.objects.filter(
-        #     organization=user.userprofile
-        # )
-        # form.fields['party'].queryset = Parties.objects.filter(
-        #     organization=user.userprofile
-        # )
         if user.is_agent:
             org = Agent.objects.get(user = self.request.user).organization
             form.fields['designated_agent'].queryset = UserProfile.objects.filter(user = user)
@@ -47,7 +48,10 @@ class TaskCreateView(LoginRequiredMixin, generic.CreateView):
         return form
 
     def form_valid(self, form):
+        lead = Lead.objects.get(pk=self.kwargs["pk"])
         task = form.save(commit=False)
+        task.lead = lead
+        task.save()
         user = self.request.user
         if user.is_organizer:
             task.owner = self.request.user.userprofile
@@ -95,6 +99,13 @@ class TaskCreateView(LoginRequiredMixin, generic.CreateView):
 
         messages.success(self.request, "You have successfully created a task and sent invites")
         return super(TaskCreateView, self).form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super(TaskCreateView, self).get_context_data(**kwargs)
+        context.update({
+            "lead": Lead.objects.get(pk=self.kwargs["pk"])
+        })
+        return context
     
     def accept_invite(request, task_id, token):
         task = get_object_or_404(Task, pk=task_id)
