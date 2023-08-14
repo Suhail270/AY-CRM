@@ -86,17 +86,24 @@ class Lead(models.Model):
 
 
 def handle_upload_follow_ups(instance, filename):
-    return f"lead_followups/lead_{instance.lead.pk}/{filename}"
+    try: 
+        return f"lead_followups/lead_{instance.lead.pk}/{filename}"
+    except: 
+        return f"opportunity_followups/opportunity_{instance.opportunity.pk}/{filename}"
 
 
 class FollowUp(models.Model):
     lead = models.ForeignKey(Lead, related_name="followups", null=True, blank=True, on_delete=models.SET_NULL)
+    opportunity = models.ForeignKey("Opportunities", related_name="followups_opp", null=True, blank=True, on_delete=models.SET_NULL)
     date = models.DateTimeField(auto_now_add=True)
     notes = models.TextField(blank=True, null=True)
     file = models.FileField(null=True, blank=True, upload_to=handle_upload_follow_ups)
 
     def __str__(self):
-        return f"{self.lead.name}"
+        try:
+            return f"{self.lead.name}"
+        except: 
+            return f"{self.opportunity.name}"
 
 
 class Agent(models.Model):
@@ -180,6 +187,7 @@ class Task(models.Model):
     reminder = models.DateTimeField(null=True, blank=True)
     repeat = models.ForeignKey(RepeatOptions, null=True, blank=True, on_delete=models.SET_NULL)
     lead = models.ForeignKey("Lead", null=True, blank=True, on_delete=models.SET_NULL)
+    opportunity = models.ForeignKey("Opportunities", null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         if self.designated_agent:
@@ -289,7 +297,7 @@ class Opportunities(models.Model):
     deal_amount = models.IntegerField(null = True, blank=True)
     party = models.ForeignKey("Parties", related_name="opportunities", null=True, blank=False, on_delete=models.SET_NULL)
     tenant_map_id = models.IntegerField(default=1)
-
+    original_lead = models.ForeignKey(Lead, null=True, blank= False,on_delete=models.SET_NULL)
     objects = LeadManager()
 
     def _str_(self):

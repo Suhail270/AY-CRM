@@ -9,7 +9,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
 from django.views import generic
 from agents.mixins import OrganizerAndLoginRequiredMixin
-from .models import Lead, Agent, Category, FollowUp, Parties ,Opportunities
+from .models import Lead, Agent, Category, FollowUp, Parties ,Opportunities,UserProfile
 from .forms import (
     LeadForm, 
     LeadModelForm, 
@@ -18,7 +18,8 @@ from .forms import (
     LeadCategoryUpdateForm,
     CategoryModelForm,
     FollowUpModelForm,
-    OpportunityModelForm
+    OpportunityModelForm,
+    OpportunityUpdateModelForm
 )
 from django.db.models import Q
 
@@ -663,6 +664,7 @@ class OpportunityConvertView(LoginRequiredMixin, generic.CreateView):
             "party": curr_lead.party,
             "converted_date" : datetime.datetime.now,
             "tenant_map_id" : curr_lead.tenant_map_id,
+            "original_lead": curr_lead,
             
         })
         return context
@@ -679,7 +681,99 @@ class OpportunityConvertView(LoginRequiredMixin, generic.CreateView):
         opportunity.party = curr_lead.party
         opportunity.tenant_map_id = curr_lead.tenant_map_id
         opportunity.converted_date = datetime.datetime.now()
+        opportunity.original_lead = curr_lead
         opportunity.save()
+        user = self.request.user
+        converted_category = Category.objects.get(name="Converted")
+        curr_lead.status = converted_category
+        curr_lead.converted_date = datetime.datetime.now()
+        curr_lead.save()
         return super(OpportunityConvertView, self).form_valid(form)
 
    
+class OpportunityUpdateView(LoginRequiredMixin, generic.UpdateView):
+    template_name = "leads/opportunity_update.html"
+    form_class = OpportunityUpdateModelForm
+    context_object_name = "opportunities"
+
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of leads for the entire organization
+        queryset = Opportunities.objects.all()
+        if user.is_agent:
+            queryset = queryset.filter(agent=Agent.objects.get(user = user))
+        return queryset
+    
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        user = self.request.user
+        return form
+
+    def get_success_url(self):
+        return reverse("leads:opportunity-list")
+
+    def form_valid(self, form):
+        updatedTask = self.get_object()
+        instance = form.save(commit=False)
+        messages.info(self.request, "You have successfully updated this opportunity")
+        if instance.last_updated_date != datetime.datetime.now():
+            instance.last_updated_date = datetime.datetime.now()
+        instance.save()
+        return super(OpportunityUpdateView, self).form_valid(form)
+
+class OpportunityDetailView(LoginRequiredMixin, generic.DetailView):
+    template_name = "leads/opportunity_detail.html"
+    context_object_name = "opportunity"
+
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of leads for the entire organization
+        if user.is_organizer:
+            queryset = Opportunities.objects.filter(organization=user.userprofile)
+        else:
+            queryset = Opportunities.objects.filter(organization=user.agent.organization)
+            # filter for the agent that is logged in
+            queryset = queryset.filter(agent__user=user)
+        return queryset
+
+class OppFollowUpCreateView(LoginRequiredMixin, generic.CreateView):
+    template_name = "leads/followup_create.html"
+    form_class = FollowUpModelForm
+
+    def get_success_url(self):
+        return reverse("leads:opportunity-detail", kwargs={"pk": self.kwargs["pk"]})
+
+    def get_context_data(self, **kwargs):
+        context = super(OppFollowUpCreateView, self).get_context_data(**kwargs)
+        context.update({
+            "opportunity": Opportunities.objects.get(pk=self.kwargs["pk"])
+        })
+        return context
+
+    def form_valid(self, form):
+        opportunity = Opportunities.objects.get(pk=self.kwargs["pk"])
+        followup = form.save(commit=False)
+        followup.opportunity = opportunity
+        followup.save()
+        return super(OppFollowUpCreateView, self).form_valid(form)
+
+
+class OppFollowUpUpdateView(LoginRequiredMixin, generic.UpdateView):
+    template_name = "leads/followup_update.html"
+    form_class = FollowUpModelForm
+
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of leads for the entire organization
+        if user.is_organizer:
+            queryset = FollowUp.objects.filter(opportunity__organization=user.userprofile)
+        else:
+            queryset = FollowUp.objects.filter(opportunity__organization=user.agent.organization)
+            # filter for the agent that is logged in
+            queryset = queryset.filter(opportunity__agent__user=user)
+        return queryset
+
+    def get_success_url(self):
+        return reverse("leads:opportunity-detail", kwargs={"pk": self.get_object().opportunity.id})
+
+

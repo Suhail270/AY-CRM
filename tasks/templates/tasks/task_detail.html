@@ -27,7 +27,7 @@
                     <span class="text-gray-500">title</span>
                     <span class="ml-auto text-gray-900">{{ tasks.title }}</span>
                 </div>
-
+                {% if tasks.opportunity == null %}
                 <div class="flex border-t border-gray-300 py-2">
                     <span class="text-gray-500">designated_lead</span>
                     <span class="ml-auto text-gray-900">
@@ -37,7 +37,18 @@
                         </a>
                     </span>
                 </div>
-
+                {%endif%}
+                {% if tasks.lead == null %}
+                <div class="flex border-t border-gray-300 py-2">
+                    <span class="text-gray-500">designated_opportunity</span>
+                    <span class="ml-auto text-gray-900">
+                        <a class="text-blue-500 hover:text-blue-800" 
+                        >
+                            {{ tasks.opportunity.name }}
+                        </a>
+                    </span>
+                </div>
+                {%endif%}
                 <div class="flex border-t border-gray-300 py-2">
                     <span class="text-gray-500">creation_date</span>
                     <span class="ml-auto text-gray-900">{{ tasks.creation_date }}</span>

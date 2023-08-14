@@ -67,7 +67,7 @@ class KpiListView(generic.ListView):
                 print(field_val)
                 
                 value = Lead.objects.filter(**{field: field_val}).count()
-                print(Lead.objects.filter(source=field_val))
+                # print(Lead.objects.filter(source=field_val))
             dic = model_to_dict(kpi)
             dic['value'] = value
             queryset.append(dic)
