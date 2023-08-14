@@ -49,7 +49,11 @@ class KpiListView(generic.ListView):
     context_object_name = "kpis"
 
     def get_queryset(self):
-        kpis = KPI.objects.all()
+        if self.request.user.is_organizer:
+            organization = self.request.user.userprofile
+        else:
+            organization = self.request.user.agent.organization
+        kpis = KPI.objects.filter(organization = organization)
         queryset = []
         for kpi in kpis:
             value = 0
