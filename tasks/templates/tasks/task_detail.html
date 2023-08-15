@@ -43,6 +43,7 @@
                     <span class="text-gray-500">designated_opportunity</span>
                     <span class="ml-auto text-gray-900">
                         <a class="text-blue-500 hover:text-blue-800" 
+                        href="{% url 'leads:opportunity-detail' tasks.opportunity.pk  %}"
                         >
                             {{ tasks.opportunity.name }}
                         </a>

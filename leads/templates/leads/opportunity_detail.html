@@ -53,6 +53,13 @@
 
     
         </span>
+        <span>
+
+        <a href="{% url 'tasks:opportunity-task-create' opportunity.pk %}" class="text-white bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded-md">Add Task</a>
+    
+        
+        </span>
+            
         </div>
 
         {% for followup in opportunity.followups_opp.all %}
