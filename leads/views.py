@@ -777,3 +777,54 @@ class OppFollowUpUpdateView(LoginRequiredMixin, generic.UpdateView):
         return reverse("leads:opportunity-detail", kwargs={"pk": self.get_object().opportunity.id})
 
 
+class TimelineView(LoginRequiredMixin, generic.TemplateView):
+
+    template_name = "leads/timeline.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(TimelineView, self).get_context_data(**kwargs)
+
+        user = self.request.user
+
+        if user.is_organizer:
+            queryset = Lead.objects.filter(
+                organization=user.userprofile, 
+                agent__isnull=False
+            )
+        else:
+            queryset = Lead.objects.filter(
+                organization=user.agent.organization, 
+                agent__isnull=False
+            )
+
+        # How many leads we have in total
+        curr_lead = queryset.filter(organization=user.userprofile, id = self.kwargs["pk"]).first()
+        curr_opp = None
+        queryset1 = None
+        if curr_lead.converted_date is not None:
+            print("not none")
+            if user.is_organizer:
+                curr_opp = Opportunities.objects.filter(
+                    organization=user.userprofile, 
+                    agent__isnull=False,
+                    original_lead = curr_lead,
+                ).first()
+            else:
+                curr_opp = Opportunities.objects.filter(
+                    organization=user.agent.organization, 
+                    agent__isnull=False,
+                    original_lead = curr_lead,
+                ).first()
+
+
+        
+
+    
+
+        context.update({
+            "curr_lead": curr_lead,
+            "qs": Category.objects.filter(organization__exact=user.userprofile),
+            "curr_opp": curr_opp
+        })
+        return context
+ 

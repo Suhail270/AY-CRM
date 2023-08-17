@@ -5,7 +5,7 @@ from .views import (
     AssignAgentView, CategoryListView, CategoryDetailView, LeadCategoryUpdateView,
     CategoryCreateView, CategoryUpdateView, CategoryDeleteView, LeadJsonView, 
     FollowUpCreateView, FollowUpUpdateView, FollowUpDeleteView, OpportunityListView, OpportunityConvertView,
-    OpportunityUpdateView,OpportunityDetailView,OppFollowUpCreateView,OppFollowUpUpdateView
+    OpportunityUpdateView,OpportunityDetailView,OppFollowUpCreateView,OppFollowUpUpdateView,TimelineView
 )
 
 app_name = "leads"
@@ -33,6 +33,7 @@ urlpatterns = [
     path('opportunities/<int:pk>/', OpportunityDetailView.as_view(), name='opportunity-detail'),
     path('opportunities/<int:pk>/followups/create/', OppFollowUpCreateView.as_view(), name='opportunity-followup-create'),
     path('opportunities/followups/<int:pk>/', OppFollowUpUpdateView.as_view(), name='opportunity-followup-update'),
+    path('<int:pk>/timeline', TimelineView.as_view(), name='timeline'),
 
 
 
