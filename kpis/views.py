@@ -48,6 +48,8 @@ def load_list_contents(request):
             record_select = "created_date__gte"
         elif kpi.record_selection.option == "modified":
             record_select = "last_updated_date__gte"
+        elif kpi.record_selection.option == "converted":
+            record_select = "converted_date__gte"
         if str(kpi.conditionOp) == "is":
             field_val = get_foreign(Lead, field).objects.get(pk=kpi.condition2)
             value = Lead.objects.filter(**{field: field_val, record_select: cutoff}).count()
