@@ -17,7 +17,6 @@ from .forms import (
     TaskModelForm
 )
 
-print('task create view')
 class TaskCreateView(LoginRequiredMixin, generic.CreateView):
     template_name = "tasks/task_create.html"
     form_class = TaskModelForm

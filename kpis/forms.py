@@ -1,5 +1,5 @@
 from django import forms
-from leads.models import (KPI, LeadSource)
+from leads.models import (KPI, LeadSource, Targets)
 from django.db.models import ForeignKey
 
 def get_fk_model(model, fieldname):
@@ -43,3 +43,22 @@ class KpiModelForm(forms.ModelForm):
 
 # class KpiForm(forms.Form):
 #     None
+
+class TargetModelForm(forms.ModelForm):
+    class Meta:
+        model = Targets
+        fields = (
+            'name',
+            'related_kpi',
+            'time_period',
+            'for_org',
+            'agents',
+            'organization'
+        )
+
+    def clean_first_name(self):
+        data = self.cleaned_data["name"]
+        return data
+
+    def clean(self):
+        pass

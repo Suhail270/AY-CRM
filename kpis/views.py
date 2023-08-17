@@ -1,10 +1,11 @@
 from django.shortcuts import render, reverse
 import datetime
 from django.views import generic
-from leads.models import KPI, Targets, Lead, LeadSource
+from leads.models import KPI, Targets, Lead, LeadSource, Agent
 from django.forms.models import model_to_dict
 from .forms import (
-    KpiModelForm
+    KpiModelForm,
+    TargetModelForm
 )
 from django.db.models import ForeignKey
 from django.http import HttpResponse
@@ -108,5 +109,47 @@ class TargetListView(generic.ListView):
         user = self.request.user
         return Targets.objects.all()
 
-class TargetCreateView(generic.TemplateView):
+class TargetCreateView(generic.CreateView):
     template_name = "kpis/target_create.html"
+    form_class = TargetModelForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = self.form_class()
+        return context
+    
+    def get_success_url(self):
+        return reverse("kpis:target-list")
+    
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        user = self.request.user
+
+        if user.is_organizer:
+            form.fields['agents'].queryset = Agent.objects.filter(
+            organization=user.userprofile
+            )
+        
+        else:
+            form.fields['agents'].queryset = Agent.objects.filter(
+                user=user
+            )
+            
+        return form
+
+    def form_valid(self, form):
+        target = form.save(commit=False)
+
+        if not self.request.user.is_organizer:
+            target.organization = Agent.objects.filter(user=self.request.user)[0].organization
+            target.agent = Agent.objects.filter(
+                    user=self.request.user
+                )[0]
+            
+        else:
+            target.organization = self.request.user.userprofile
+
+        target.save()
+        return super(TargetCreateView, self).form_valid(form)
+    
+       
