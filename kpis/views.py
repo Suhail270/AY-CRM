@@ -1,4 +1,5 @@
 from django.shortcuts import render, reverse
+import datetime
 from django.views import generic
 from leads.models import KPI, Targets, Lead, LeadSource
 from django.forms.models import model_to_dict
@@ -6,6 +7,7 @@ from .forms import (
     KpiModelForm
 )
 from django.db.models import ForeignKey
+from django.http import HttpResponse
 
 def get_fk_model(model, fieldname):
     """Returns None if not foreignkey, otherswise the relevant model"""
@@ -28,6 +30,35 @@ def get_foreign(model, field_name):
 
 # ---------
 
+def load_list_contents(request):
+    period = int(request.GET.get("period"))
+
+    if request.user.is_organizer:
+        organization = request.user.userprofile
+    else:
+        organization = request.user.agent.organization
+    
+    cutoff = datetime.date.today() - datetime.timedelta(days=period)
+
+    kpis = KPI.objects.filter(organization = organization)
+    queryset = []
+    for kpi in kpis:
+        field = str(kpi.condition1)
+        if kpi.record_selection.option == "created":
+            record_select = "created_date__gte"
+        elif kpi.record_selection.option == "modified":
+            record_select = "last_updated_date__gte"
+        if str(kpi.conditionOp) == "is":
+            field_val = get_foreign(Lead, field).objects.get(pk=kpi.condition2)
+            value = Lead.objects.filter(**{field: field_val, record_select: cutoff}).count()
+            value = value * kpi.points_per_record
+        dic = model_to_dict(kpi)
+        dic['value'] = value
+        # if value != 0:
+        queryset.append(dic)
+
+    return render(request, 'kpis/kpi_list_contents.html', {"kpis": queryset})
+
 def load_cond2(request):
     field = request.GET.get('field')
     foreign = get_foreign(Lead, field)
@@ -44,35 +75,8 @@ def load_cond2(request):
         print(dic)
     return render(request, 'kpis/kpi_dropdown_cond2.html', {'field_vals': dics})
 
-class KpiListView(generic.ListView):
+class KpiListView(generic.TemplateView):
     template_name = "kpis/kpi_list.html"
-    context_object_name = "kpis"
-
-    def get_queryset(self):
-        if self.request.user.is_organizer:
-            organization = self.request.user.userprofile
-        else:
-            organization = self.request.user.agent.organization
-        kpis = KPI.objects.filter(organization = organization)
-        queryset = []
-        for kpi in kpis:
-            value = 0
-            if str(kpi.conditionOp) == "is":
-                field = str(kpi.condition1)
-                val = kpi.condition2
-                # field_val_foreign = str(kpi.condition2)
-                # field_val = Lead.objects.filter(**{})
-
-                field_val = get_foreign(Lead, field).objects.get(pk=kpi.condition2)
-                print(field_val)
-                
-                value = Lead.objects.filter(**{field: field_val}).count()
-                value = value * kpi.points_per_record
-                print(Lead.objects.filter(source=field_val))
-            dic = model_to_dict(kpi)
-            dic['value'] = value
-            queryset.append(dic)
-        return queryset
 
 
 class KpiCreateView(generic.CreateView):
