@@ -6,7 +6,8 @@ from .views import (
     TaskDetailView,
     TaskUpdateView,
     TaskDeleteView,
-    OppTaskCreateView
+    OppTaskCreateView,
+    TaskNotificationView
 )
 
 app_name = "tasks"
@@ -21,4 +22,7 @@ urlpatterns = [
     path('opportunity/<int:pk>/create/', OppTaskCreateView.as_view(), name='opportunity-task-create'),
     # path('opportunity/<int:pk>/update/', TaskUpdateView.as_view(), name='task-update'),
     # path('opportunity/<int:pk>/delete/', TaskDeleteView.as_view(), name='task-delete'),
+    path('<int:pk>/delete/', TaskDeleteView.as_view(), name='task-delete'),
+    path('notification/', TaskNotificationView.as_view(), name='task-notification'),
+
 ]
