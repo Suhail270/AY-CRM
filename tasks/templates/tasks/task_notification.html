@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="text-gray-700 body-font">
+    <div class="container px-5 py-24 mx-auto flex flex-wrap">
+        <div class="w-full mb-6 py-6 flex justify-between items-center border-b border-gray-200">
+            <div>
+                <h1 class="text-4xl text-gray-800">Upcoming Tasks</h1>
+            </div>
+        </div>
+
+        <div class="flex flex-col w-full">
+            <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+            <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+               
+                <table class="min-w-full divide-y divide-gray-200">
+                    <tbody>
+
+                        <div class="max-w-6xl mx-auto mt-8">
+
+                            <div class="grid grid-cols-3 gap-4 mt-8">
+                                <div class="column">
+                                    <div class="kanban-container" id="todo">
+                                        {% for task in task_todo %}
+                                            <div class="kanban-card" data-id="{{ task.id }}">
+                                                <div class="kanban-card-title"><a
+                                                  class="text-blue-500 hover:text-black-800"
+                                                  href="{% url 'tasks:task-detail' task.pk %}"
+                                                  >{{ task.title }} </a
+                                                ></div>
+                                                <div class="kanban-card-description"><span class="text-gray-500">Description:</span> {{ task.referenceNotes }}</div>
+                                                <div class="kanban-card-description"><span class="text-gray-500">Start:</span> {{ task.start_date }}</div>
+                                                <div class="kanban-card-description"><span class="text-gray-500">Deadline:</span> {{ task.deadline }}</div>
+                                                {% if request.user.is_organizer %}
+                                                    <div class="kanban-card-description"><span class="text-gray-500">Agent:</span> {{ task.designated_agent }}</div>
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                    
+                                </div>
+                            </div>
+                        
+                            <ul class="grid grid-cols-1 gap-4">
+                                {% for task in upcoming_tasks %}
+                                    <li class="border border-gray-300 rounded-lg px-4 py-2">
+                                        <a class="text-blue-500 hover:text-black-800" href="{% url 'tasks:task-detail' task.pk %}">
+                                            {{ task.title }}
+                                        </a>
+                                        - Deadline: {{ task.deadline }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </tbody>
+                </table>
+               
+            </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .column {
+        flex: 1;
+    }
+
+    .grid {
+        display: grid;
+    }
+
+    .grid-cols-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    .table th,
+    .table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+
+    .table th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+    }
+
+    .kanban-container {
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 10px;
+        height: 400px;
+        overflow-y: auto;
+    }
+    .kanban-header {
+        padding: 10px;
+        border-radius: 5px 5px 0 0;
+        margin-bottom: 8px;
+    }
+
+    .kanban-card {
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 8px;
+        margin-bottom: 8px;
+    }
+    .table-scroll {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    .table-scroll th,
+    .table-scroll td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+
+    .table-scroll th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+    }
+
+</style>
+
+{% endblock content %}

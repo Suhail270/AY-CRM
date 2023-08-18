@@ -1,0 +1,110 @@
+from django import forms
+from django.core.exceptions import ValidationError
+from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import UserCreationForm, UsernameField
+from .models import Lead, Agent, Category, FollowUp, Parties,Opportunities
+
+User = get_user_model()
+
+
+class LeadModelForm(forms.ModelForm):
+    class Meta:
+        model = Lead
+        fields = (
+            'name',
+            'description',
+            'status',
+            'source',
+            'agent',
+            'party'
+        )
+
+    def clean_first_name(self):
+        data = self.cleaned_data["first_name"]
+        return data
+
+    def clean(self):
+        pass
+
+class LeadForm(forms.Form):
+    first_name = forms.CharField()
+    last_name = forms.CharField()
+    age = forms.IntegerField(min_value=0)
+
+
+class CustomUserCreationForm(UserCreationForm):
+    class Meta:
+        model = User
+        fields = ("username",)
+        field_classes = {'username': UsernameField}
+
+
+class AssignAgentForm(forms.Form):
+    agent = forms.ModelChoiceField(queryset=Agent.objects.none())
+
+    def __init__(self, *args, **kwargs):
+        request = kwargs.pop("request")
+        agents = Agent.objects.filter(organization=request.user.userprofile)
+        super(AssignAgentForm, self).__init__(*args, **kwargs)
+        self.fields["agent"].queryset = agents
+
+
+class LeadCategoryUpdateForm(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user')
+        super(LeadCategoryUpdateForm, self).__init__(*args, **kwargs)
+        # Filter the choices for the status field to only include categories that belong to the user's organization
+        self.fields['status'].queryset = Category.objects.filter(organization=user.userprofile)
+
+
+    class Meta:
+        model = Lead
+        fields = (
+            'status',
+        )
+
+
+class CategoryModelForm(forms.ModelForm):
+    class Meta:
+        model = Category
+        fields = (
+            'name',
+        )
+
+
+class FollowUpModelForm(forms.ModelForm):
+    class Meta:
+        model = FollowUp
+        fields = (
+            'notes',
+            'file'
+        )
+
+class OpportunityModelForm(forms.ModelForm):
+    class Meta:
+        model = Opportunities
+        fields = (
+            # 'name',
+            # 'description',
+            # 'status',
+            # 'source',
+            # 'agent',
+            # 'party',
+            'deal_amount',
+        )
+
+class OpportunityUpdateModelForm(forms.ModelForm):
+    class Meta:
+        model = Opportunities
+        fields = (
+            'name',
+            'description',
+            'status',
+            'source',
+            # 'agent',
+            # 'party',
+            'deal_amount',
+            
+        )
+
