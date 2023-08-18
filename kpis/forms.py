@@ -47,14 +47,17 @@ class KpiModelForm(forms.ModelForm):
 class TargetModelForm(forms.ModelForm):
     class Meta:
         model = Targets
-        fields = (
+        fields = [
             'name',
             'related_kpi',
             'time_period',
             'for_org',
             'agents',
             'organization'
-        )
+        ]
+        widgets = {
+            "for_org": forms.CheckboxInput()
+        }
 
     def clean_first_name(self):
         data = self.cleaned_data["name"]
