@@ -11,7 +11,21 @@ from .models import (User,
                      UserType, 
                      LeadSource,
                      Lookup_Names,
-                     Lookup_Name_Values)
+                     Lookup_Name_Values,
+                     TaskAttendees,
+                     Task,
+                     TaskStatusOptions,
+                     RecordSelection,
+                     RecordSelectionRange,
+                     Recipient,
+                     Condition1,
+                     Condition2,
+                     ConditionOperator,
+                     KPI,
+                     Targets,
+                     RepeatOptions,
+                     Opportunities,
+                     Contacts)
 
 
 
@@ -37,3 +51,18 @@ admin.site.register(UserType)
 admin.site.register(LeadSource)
 admin.site.register(Lookup_Names)
 admin.site.register(Lookup_Name_Values)
+admin.site.register(Task)
+admin.site.register(TaskAttendees)
+admin.site.register(TaskStatusOptions)
+admin.site.register(RecordSelection)
+admin.site.register(RecordSelectionRange)
+admin.site.register(Recipient)
+admin.site.register(Condition1)
+admin.site.register(Condition2)
+admin.site.register(ConditionOperator)
+admin.site.register(KPI)
+admin.site.register(Targets)
+admin.site.register(RepeatOptions)
+admin.site.register(Opportunities)
+admin.site.register(Contacts)
+
