@@ -92,11 +92,17 @@ class KpiCreateView(generic.CreateView):
     def get_form(self, form_class=None):
         print([f.name for f in KPI._meta.get_fields()])
         form = super().get_form(form_class)
+
         return form
 
     def form_valid(self, form):
-        print(self.request.POST)
         kpi = form.save(commit=False)
+        user = self.request.user
+        if user.is_organizer:
+            organization = user.userprofile
+        else:
+            organization = user.agent.organization
+        kpi.organization = organization
         kpi.save()
         return super(KpiCreateView, self).form_valid(form)
 
