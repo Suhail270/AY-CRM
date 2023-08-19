@@ -1,5 +1,5 @@
 from django import forms
-from leads.models import (KPI, LeadSource, Targets)
+from leads.models import (KPI, LeadSource, Targets, UserProfile)
 from django.db.models import ForeignKey
 
 def get_fk_model(model, fieldname):
@@ -50,12 +50,14 @@ class TargetModelForm(forms.ModelForm):
         fields = (
             'name',
             'related_kpi',
+            'target_points',
             'time_period',
             'for_org',
             'agents',
         )
         widgets = {
-            "for_org": forms.CheckboxInput()
+            "for_org": forms.CheckboxInput(),
+            'agents': forms.CheckboxSelectMultiple()
         }
 
     def clean_first_name(self):
@@ -66,5 +68,15 @@ class TargetModelForm(forms.ModelForm):
         pass
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        self.user = kwargs.pop('user', None)
+        user_var = self.user
+        print("#########")
+        print(self.user)
+        # print("here: " + self.user.userprofile)
+        print("#########")
+        super(TargetModelForm, self).__init__(*args, **kwargs)
         self.fields['for_org'].label = "for entire organization?"
+        agent_queryset = UserProfile.objects.filter(
+            user__is_agent = True
+        )#.filter(user__agent__organization=user_var.userprofile)
+        self.fields['agents'].queryset = agent_queryset

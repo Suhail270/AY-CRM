@@ -271,6 +271,7 @@ class Targets(models.Model):
     # agent = models.ForeignKey("Agent", null=True, blank=True, on_delete=models.SET_NULL)
     agents = models.ManyToManyField(UserProfile, blank=True, related_name="agents")
     organization = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL, related_name="org")
+    target_points = models.IntegerField(default=1)
 
 
 def post_user_created_signal(sender, instance, created, **kwargs):

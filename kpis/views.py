@@ -1,7 +1,7 @@
 from django.shortcuts import render, reverse
 import datetime
 from django.views import generic
-from leads.models import KPI, Targets, Lead, LeadSource, Agent
+from leads.models import KPI, Targets, Lead, LeadSource, Agent, UserProfile
 from django.forms.models import model_to_dict
 from .forms import (
     KpiModelForm,
@@ -62,6 +62,47 @@ def load_list_contents(request):
 
     return render(request, 'kpis/kpi_list_contents.html', {"kpis": queryset})
 
+def load_targets(request):
+    if request.user.is_organizer:
+        organization = request.user.userprofile
+    else:
+        organization = request.user.agent.organization
+    
+    targets = Targets.objects.filter(organization = organization)
+    
+    queryset = []
+    for target in targets:
+        kpi = target.related_kpi
+        period_str = target.time_period
+        period = 0
+        if period_str == "Daily":
+            period = 1
+        elif period_str == "Weekly":
+            period = 7
+        elif period_str == "Monthly":
+            period = 30
+        elif period_str == "Yearly":
+            period = 365
+        cutoff = datetime.date.today() - datetime.timedelta(days=period)
+        field = str(kpi.condition1)
+        if kpi.record_selection.option == "created":
+            record_select = "created_date__gte"
+        elif kpi.record_selection.option == "modified":
+            record_select = "last_updated_date__gte"
+        elif kpi.record_selection.option == "converted":
+            record_select = "converted_date__gte"
+        if str(kpi.conditionOp) == "is":
+            field_val = get_foreign(Lead, field).objects.get(pk=kpi.condition2)
+            value = Lead.objects.filter(**{field: field_val, record_select: cutoff}).count()
+            value = value * kpi.points_per_record
+        dic = model_to_dict(target)
+        dic['score'] = value
+        queryset.append(dic)
+    
+    return render(request, 'kpis/target_list_contents.html', {"targets": queryset})
+        
+        
+
 def load_cond2(request):
     field = request.GET.get('field')
     foreign = get_foreign(Lead, field)
@@ -107,47 +148,45 @@ class KpiCreateView(generic.CreateView):
         return super(KpiCreateView, self).form_valid(form)
 
 
-class TargetListView(generic.ListView):
+class TargetListView(generic.TemplateView):
     template_name = "kpis/target_list.html"
-    context_object_name = "targets"
-
-    def get_queryset(self):
-        user = self.request.user
-        return Targets.objects.all()
 
 class TargetCreateView(generic.CreateView):
     template_name = "kpis/target_create.html"
     form_class = TargetModelForm
 
+    def get_success_url(self):
+        return reverse("kpis:target-list")
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['form'] = self.form_class()
+        context['form'] = self.form_class(user=self.request.user)
         return context
     
     def get_success_url(self):
         return reverse("kpis:target-list")
     
-    def get_form(self, form_class=None):
-        form = super().get_form(form_class)
+    def get_form(self):
         user = self.request.user
+        form = super().get_form(self.form_class)
 
         if user.is_organizer:
-            form.fields['agents'].queryset = Agent.objects.filter(
-            organization=user.userprofile
-            )
+            # form.fields['agents'].queryset = UserProfile.objects.filter(
+            #     user__is_agent = True
+            # ).filter(user__agent__organization=user.userprofile)
             form.fields['related_kpi'].queryset = KPI.objects.filter(
-            organization=user.userprofile
+                organization=user.userprofile
             )
-        
+            for thing in form.fields['agents'].queryset:
+                print(thing.user.is_agent)
+                print(thing.user.username)
         else:
-            form.fields['agents'].queryset = Agent.objects.filter(
+            form.fields['agents'].queryset = UserProfile.objects.filter(
                 user=user
             )
             form.fields['related_kpi'].queryset = KPI.objects.filter(
-            organization= user.agent.organization
+                organization= user.agent.organization
             )
-        
-        
             
         return form
 

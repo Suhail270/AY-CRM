@@ -1,7 +1,7 @@
 
 from django.urls import path
 from .views import (
-    KpiListView, KpiCreateView, TargetCreateView, TargetListView, load_cond2, load_list_contents
+    KpiListView, KpiCreateView, TargetCreateView, TargetListView, load_cond2, load_list_contents, load_targets
 )
 
 app_name = "kpis"
@@ -13,5 +13,6 @@ urlpatterns = [
     path('create-target', TargetCreateView.as_view(), name='target-create'),
 
     path('ajax/load-cond2/', load_cond2, name='ajax_load_cond2'),
-    path('ajax/load-list-contents/', load_list_contents, name='ajax_load_list_contents')
+    path('ajax/load-list-contents/', load_list_contents, name='ajax_load_list_contents'),
+    path('ajax/load-targets/', load_targets, name='ajax_load_targets')
 ]
