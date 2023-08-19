@@ -1,11 +1,14 @@
 from django.shortcuts import render, reverse
+import datetime
 from django.views import generic
-from leads.models import KPI, Targets, Lead, LeadSource
+from leads.models import KPI, Targets, Lead, LeadSource, Agent
 from django.forms.models import model_to_dict
 from .forms import (
-    KpiModelForm
+    KpiModelForm,
+    TargetModelForm
 )
 from django.db.models import ForeignKey
+from django.http import HttpResponse
 
 def get_fk_model(model, fieldname):
     """Returns None if not foreignkey, otherswise the relevant model"""
@@ -28,6 +31,37 @@ def get_foreign(model, field_name):
 
 # ---------
 
+def load_list_contents(request):
+    period = int(request.GET.get("period"))
+
+    if request.user.is_organizer:
+        organization = request.user.userprofile
+    else:
+        organization = request.user.agent.organization
+    
+    cutoff = datetime.date.today() - datetime.timedelta(days=period)
+
+    kpis = KPI.objects.filter(organization = organization)
+    queryset = []
+    for kpi in kpis:
+        field = str(kpi.condition1)
+        if kpi.record_selection.option == "created":
+            record_select = "created_date__gte"
+        elif kpi.record_selection.option == "modified":
+            record_select = "last_updated_date__gte"
+        elif kpi.record_selection.option == "converted":
+            record_select = "converted_date__gte"
+        if str(kpi.conditionOp) == "is":
+            field_val = get_foreign(Lead, field).objects.get(pk=kpi.condition2)
+            value = Lead.objects.filter(**{field: field_val, record_select: cutoff}).count()
+            value = value * kpi.points_per_record
+        dic = model_to_dict(kpi)
+        dic['value'] = value
+        # if value != 0:
+        queryset.append(dic)
+
+    return render(request, 'kpis/kpi_list_contents.html', {"kpis": queryset})
+
 def load_cond2(request):
     field = request.GET.get('field')
     foreign = get_foreign(Lead, field)
@@ -44,34 +78,8 @@ def load_cond2(request):
         print(dic)
     return render(request, 'kpis/kpi_dropdown_cond2.html', {'field_vals': dics})
 
-class KpiListView(generic.ListView):
+class KpiListView(generic.TemplateView):
     template_name = "kpis/kpi_list.html"
-    context_object_name = "kpis"
-
-    def get_queryset(self):
-        if self.request.user.is_organizer:
-            organization = self.request.user.userprofile
-        else:
-            organization = self.request.user.agent.organization
-        kpis = KPI.objects.filter(organization = organization)
-        queryset = []
-        for kpi in kpis:
-            value = 0
-            if str(kpi.conditionOp) == "is":
-                field = str(kpi.condition1)
-                val = kpi.condition2
-                # field_val_foreign = str(kpi.condition2)
-                # field_val = Lead.objects.filter(**{})
-
-                field_val = get_foreign(Lead, field).objects.get(pk=kpi.condition2)
-                print(field_val)
-                
-                value = Lead.objects.filter(**{field: field_val}).count()
-                # print(Lead.objects.filter(source=field_val))
-            dic = model_to_dict(kpi)
-            dic['value'] = value
-            queryset.append(dic)
-        return queryset
 
 
 class KpiCreateView(generic.CreateView):
@@ -84,11 +92,17 @@ class KpiCreateView(generic.CreateView):
     def get_form(self, form_class=None):
         print([f.name for f in KPI._meta.get_fields()])
         form = super().get_form(form_class)
+
         return form
 
     def form_valid(self, form):
-        print(self.request.POST)
         kpi = form.save(commit=False)
+        user = self.request.user
+        if user.is_organizer:
+            organization = user.userprofile
+        else:
+            organization = user.agent.organization
+        kpi.organization = organization
         kpi.save()
         return super(KpiCreateView, self).form_valid(form)
 
@@ -101,5 +115,47 @@ class TargetListView(generic.ListView):
         user = self.request.user
         return Targets.objects.all()
 
-class TargetCreateView(generic.TemplateView):
+class TargetCreateView(generic.CreateView):
     template_name = "kpis/target_create.html"
+    form_class = TargetModelForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = self.form_class()
+        return context
+    
+    def get_success_url(self):
+        return reverse("kpis:target-list")
+    
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        user = self.request.user
+
+        if user.is_organizer:
+            form.fields['agents'].queryset = Agent.objects.filter(
+            organization=user.userprofile
+            )
+        
+        else:
+            form.fields['agents'].queryset = Agent.objects.filter(
+                user=user
+            )
+            
+        return form
+
+    def form_valid(self, form):
+        target = form.save(commit=False)
+
+        if not self.request.user.is_organizer:
+            target.organization = Agent.objects.filter(user=self.request.user)[0].organization
+            target.agent = Agent.objects.filter(
+                    user=self.request.user
+                )[0]
+            
+        else:
+            target.organization = self.request.user.userprofile
+
+        target.save()
+        return super(TargetCreateView, self).form_valid(form)
+    
+       
