@@ -798,9 +798,12 @@ class TimelineView(LoginRequiredMixin, generic.TemplateView):
             )
 
         # How many leads we have in total
-        curr_lead = queryset.filter(organization=user.userprofile, id = self.kwargs["pk"]).first()
+        if user.is_organizer:
+            curr_lead = queryset.filter(organization=user.userprofile, id = self.kwargs["pk"]).first()
+        else :
+            curr_lead = queryset.filter(agent=user.agent, id = self.kwargs["pk"]).first()
+        
         curr_opp = None
-        queryset1 = None
         if curr_lead.converted_date is not None:
             print("not none")
             if user.is_organizer:
@@ -811,7 +814,7 @@ class TimelineView(LoginRequiredMixin, generic.TemplateView):
                 ).first()
             else:
                 curr_opp = Opportunities.objects.filter(
-                    organization=user.agent.organization, 
+                    agent=user.agent, 
                     agent__isnull=False,
                     original_lead = curr_lead,
                 ).first()
@@ -849,8 +852,15 @@ class OppTimelineView(LoginRequiredMixin, generic.TemplateView):
             )
 
         # How many leads we have in total
-        curr_opp = queryset.filter(organization=user.userprofile, id = self.kwargs["pk"]).first()
-        curr_lead = curr_opp.original_lead       
+        curr_opp = None
+        curr_lead = None
+        if user.is_organizer:
+            curr_opp = queryset.filter(organization=user.userprofile, id = self.kwargs["pk"]).first()
+            curr_lead = curr_opp.original_lead      
+
+        else :
+            curr_opp = queryset.filter(agent=user.agent, id = self.kwargs["pk"]).first()
+            curr_lead = curr_opp.original_lead    
 
 
         
