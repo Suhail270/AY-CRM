@@ -828,3 +828,39 @@ class TimelineView(LoginRequiredMixin, generic.TemplateView):
         })
         return context
  
+class OppTimelineView(LoginRequiredMixin, generic.TemplateView):
+
+    template_name = "leads/timeline.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(OppTimelineView, self).get_context_data(**kwargs)
+
+        user = self.request.user
+
+        if user.is_organizer:
+            queryset = Opportunities.objects.filter(
+                organization=user.userprofile, 
+                agent__isnull=False
+            )
+        else:
+            queryset = Opportunities.objects.filter(
+                organization=user.agent.organization, 
+                agent__isnull=False
+            )
+
+        # How many leads we have in total
+        curr_opp = queryset.filter(organization=user.userprofile, id = self.kwargs["pk"]).first()
+        curr_lead = curr_opp.original_lead       
+
+
+        
+
+    
+
+        context.update({
+            "curr_lead": curr_lead,
+            "qs": Category.objects.filter(organization__exact=user.userprofile),
+            "curr_opp": curr_opp
+        })
+        return context
+ 

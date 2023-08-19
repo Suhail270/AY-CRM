@@ -52,12 +52,12 @@
         <a href="{% url 'leads:opportunity-followup-create' opportunity.pk %}" class="text-white bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded-md">Add a followup</a>
 
     
-        </span>
-        <span>
+        
 
         <a href="{% url 'tasks:opportunity-task-create' opportunity.pk %}" class="text-white bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded-md">Add Task</a>
     
-        
+        <a href="{% url 'leads:opportunity-timeline' opportunity.pk %}" class="text-white bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded-md">Timeline</a>
+
         </span>
             
         </div>
