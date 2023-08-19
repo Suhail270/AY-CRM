@@ -135,11 +135,19 @@ class TargetCreateView(generic.CreateView):
             form.fields['agents'].queryset = Agent.objects.filter(
             organization=user.userprofile
             )
+            form.fields['related_kpi'].queryset = KPI.objects.filter(
+            organization=user.userprofile
+            )
         
         else:
             form.fields['agents'].queryset = Agent.objects.filter(
                 user=user
             )
+            form.fields['related_kpi'].queryset = KPI.objects.filter(
+            organization= user.agent.organization
+            )
+        
+        
             
         return form
 

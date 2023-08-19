@@ -53,8 +53,10 @@ class TargetModelForm(forms.ModelForm):
             'time_period',
             'for_org',
             'agents',
-            'organization'
         )
+        widgets = {
+            "for_org": forms.CheckboxInput()
+        }
 
     def clean_first_name(self):
         data = self.cleaned_data["name"]
@@ -62,3 +64,7 @@ class TargetModelForm(forms.ModelForm):
 
     def clean(self):
         pass
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['for_org'].label = "for entire organization?"
