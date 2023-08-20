@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Dict
 from django.shortcuts import render, reverse
 from django.template.loader import render_to_string
 import datetime
@@ -326,12 +326,17 @@ class TargetCreateView(generic.CreateView):
     def get_success_url(self):
         return reverse("kpis:target-list")
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form'] = self.form_class()
-        return context
+    # def get_context_data(self, **kwargs):
+    #     context = super().get_context_data(**kwargs)
+    #     print("DEEEEEEEEfgsgrgsgsdfgEEZ")
+    #     print(self.request.user)
+    #     context['form'] = self.form_class()
+    #     return context
     
-    def get_form(self, form_class=None):
+    def get_form(self, form_class=TargetModelForm):
+        
+        print("DEEEEEEEEEEZ")
+        print(self.request.user)
         form = super().get_form(form_class)
 
         # if user.is_organizer:
@@ -353,6 +358,11 @@ class TargetCreateView(generic.CreateView):
         #     )
             
         return form
+    
+    def get_form_kwargs(self):
+        kwargs = super(TargetCreateView, self).get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
 
     def form_valid(self, form):
         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
