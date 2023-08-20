@@ -323,14 +323,16 @@ class TargetCreateView(generic.CreateView):
     # def get_success_url(self):
     #     return reverse("kpis:target-list")
 
+    def get_success_url(self):
+        return reverse("kpis:target-list")
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['form'] = self.form_class(user=self.request.user)
+        context['form'] = self.form_class()
         return context
     
-    def get_form(self):
-        user = self.request.user
-        form = self.form_class(user=self.request.user)
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
 
         # if user.is_organizer:
         #     # form.fields['agents'].queryset = UserProfile.objects.filter(
@@ -356,14 +358,14 @@ class TargetCreateView(generic.CreateView):
         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         target = form.save(commit=False)
 
-        if not self.request.user.is_organizer:
-            target.organization = Agent.objects.filter(user=self.request.user)[0].organization
-            target.agent = Agent.objects.filter(
-                    user=self.request.user
-                )[0]
+        # if not self.request.user.is_organizer:
+        #     target.organization = Agent.objects.filter(user=self.request.user)[0].organization
+        #     target.agent = Agent.objects.filter(
+        #             user=self.request.user
+        #         )[0]
             
-        else:
-            target.organization = self.request.user.userprofile
+        # else:
+        #     target.organization = self.request.user.userprofile
 
         target.save()
         return super(TargetCreateView, self).form_valid(form)
