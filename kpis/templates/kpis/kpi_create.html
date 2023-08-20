@@ -22,17 +22,43 @@
   <script>
     $("[id='div_id_condition2']").hide()
     $("[id='div_id_condition2int']").hide()
+    $("[id='div_id_points_per_record']").hide();
+    $("[name='points_valueOfField']").prop('checked', true);
+    function change_valueOfField() {
+      if ($("[name='points_valueOfField']").is(":checked")) {
+        $("[name='points_per_record']").prop('disabled', 'disabled');
+        $("[id='div_id_points_per_record']").hide();
+        $("[name='points_val_select']").prop('checked', false);
+      } else {
+        $("[name='points_val_select']").prop('checked', true);
+        $("[name='points_valueOfField']").prop('checked', false);
+        $("[id='div_id_points_per_record']").show();
+        $("[name='points_per_record']").prop('disabled', false);
+      }
+    }
+    function change_val_select() {
+      if ($("[name='points_val_select']").is(":checked")){
+        $("[name='points_valueOfField']").prop('checked', false);
+        $("[id='div_id_points_per_record']").show();
+        $("[name='points_per_record']").prop('disabled', false);
+      } else {
+        $("[name='points_valueOfField']").prop('checked', true);
+        $("[id='div_id_points_per_record']").hide();
+      }
+    }
+    $("[name='points_valueOfField']").change(change_valueOfField);
+    $("[name='points_val_select']").change(change_val_select);
     $("[name='module']").change(function () {
       var url = $("#kpiForm").attr("module-url");
       var moduleId = $(this).find("option:selected").text();
     
-      $.ajax({                       // initialize an AJAX request
-        url: url,                    // set the url of the request
+      $.ajax({
+        url: url,
         data: {
-          'module': moduleId       // add the country id to the GET parameters
+          'module': moduleId
         },
-        success: function (data) {   // `data` is the return of the `load_cities` view function
-          $("[name='condition1']").html(data);  // replace the contents of the city input with the data that came from the server
+        success: function (data) {
+          $("[name='condition1']").html(data);
         }
       });
 
@@ -55,11 +81,17 @@
             $("[id='div_id_condition2']").show()
             $("[name='condition2int']").prop('disabled', 'disabled')
             $("[id='div_id_condition2int']").hide()
+            $("[name='points_val_select']").prop('checked', true);
+            $("[name='points_valueOfField']").prop('disabled', true);
+            $("[name='points_val_select']").prop('disabled', true);
+            change_val_select()
           } else {
             $("[name='condition2']").prop('disabled', 'disabled')
             $("[id='div_id_condition2']").hide()
             $("[name='condition2int']").prop('disabled', false)
             $("[id='div_id_condition2int']").show()
+            $("[name='points_valueOfField']").prop('disabled', false);
+            $("[name='points_val_select']").prop('disabled', false);
           }
         }
       });

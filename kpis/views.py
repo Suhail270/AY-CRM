@@ -41,29 +41,35 @@ def load_list_contents(request):
     queryset = []
     for kpi in kpis:
         module = eval(kpi.module.option)
-        field = str(kpi.condition1)
+        og_field = field = str(kpi.condition1)
+
         if kpi.record_selection.option == "created":
             record_select = "created_date__gte"
         elif kpi.record_selection.option == "modified":
             record_select = "last_updated_date__gte"
         elif kpi.record_selection.option == "converted":
             record_select = "converted_date__gte"
+
         if str(kpi.conditionOp) == "is":
             model = get_foreign(module, field)
             if model == None:
                 field_val = kpi.condition2
             else:
                 field_val = model.objects.get(pk=kpi.condition2)
-            value = module.objects.filter(**{field: field_val, record_select: cutoff}).count()
-            value = value * kpi.points_per_record
+            objects = module.objects.filter(**{field: field_val, record_select: cutoff})
         else:
             field_val = kpi.condition2
             if str(kpi.conditionOp) == "greater than or equal to":
                 field = field + "__gte"
             elif str(kpi.conditionOp) == "lower than or equal to":
                 field = field + "__lte"
-            value = module.objects.filter(**{field: field_val, record_select: cutoff}).count()
-            value = value * kpi.points_per_record
+            objects = module.objects.filter(**{field: field_val, record_select: cutoff})
+        if kpi.points_valueOfField:
+            value = 0
+            for obj in objects:
+                value += getattr(obj, og_field)
+        else:
+            value = objects.count() * kpi.points_per_record
         dic = model_to_dict(kpi)
         dic['value'] = value
         # if value != 0:
@@ -109,28 +115,30 @@ def load_targets(request):
         # queryset.append(dic)
         module = eval(kpi.module.option)
         field = str(kpi.condition1)
+
         if kpi.record_selection.option == "created":
             record_select = "created_date__gte"
         elif kpi.record_selection.option == "modified":
             record_select = "last_updated_date__gte"
         elif kpi.record_selection.option == "converted":
             record_select = "converted_date__gte"
+
         if str(kpi.conditionOp) == "is":
             model = get_foreign(module, field)
             if model == None:
                 field_val = kpi.condition2
             else:
                 field_val = model.objects.get(pk=kpi.condition2)
-            value = module.objects.filter(**{field: field_val, record_select: cutoff}).count()
-            value = value * kpi.points_per_record
+            objects = module.objects.filter(**{field: field_val, record_select: cutoff})
         else:
             field_val = kpi.condition2
             if str(kpi.conditionOp) == "greater than or equal to":
                 field = field + "__gte"
             elif str(kpi.conditionOp) == "lower than or equal to":
                 field = field + "__lte"
-            value = module.objects.filter(**{field: field_val, record_select: cutoff}).count()
-            value = value * kpi.points_per_record
+            objects = module.objects.filter(**{field: field_val, record_select: cutoff})
+        # if kpi.asd
+        value = 1
         dic = model_to_dict(target)
         dic['score'] = value
         # if value != 0:
@@ -266,10 +274,14 @@ class KpiCreateView(generic.FormView):
         module = form.cleaned_data["module"]
         record_selection = form.cleaned_data["record_selection"]
         points_per_record = form.cleaned_data["points_per_record"]
-        recipient= form.cleaned_data["recipient"]
+        # recipient= form.cleaned_data["recipient"]
         condition1 = form.cleaned_data["condition1"]
         conditionOp = form.cleaned_data["conditionOp"]
+        points_valueOfField = form.cleaned_data["points_valueOfField"]
         # condition2 = form.cleaned_data["condition2"]
+
+        if points_per_record == 0 or points_per_record == None:
+            points_per_record = 1
 
         module_class = eval(module.option)
         field = str(Condition1.objects.get(pk=condition1))
@@ -283,11 +295,12 @@ class KpiCreateView(generic.FormView):
             module=module,
             record_selection=record_selection,
             points_per_record=points_per_record,
-            recipient=recipient,
+            # recipient=recipient,
             condition1=Condition1.objects.get(pk=condition1),
             conditionOp=ConditionOperator.objects.get(pk=conditionOp),
             # conditionOp=conditionOp,
-            condition2=condition2
+            condition2=condition2,
+            points_valueOfField=points_valueOfField
         )
         user = self.request.user
         if user.is_organizer:
