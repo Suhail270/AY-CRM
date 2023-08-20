@@ -168,7 +168,7 @@ class TargetCreateView(generic.CreateView):
     
     def get_form(self):
         user = self.request.user
-        form = super().get_form(self.form_class)
+        form = self.form_class(user=self.request.user)
 
         if user.is_organizer:
             # form.fields['agents'].queryset = UserProfile.objects.filter(
