@@ -358,14 +358,14 @@ class TargetCreateView(generic.CreateView):
         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         target = form.save(commit=False)
 
-        # if not self.request.user.is_organizer:
-        #     target.organization = Agent.objects.filter(user=self.request.user)[0].organization
-        #     target.agent = Agent.objects.filter(
-        #             user=self.request.user
-        #         )[0]
+        if not self.request.user.is_organizer:
+            target.organization = Agent.objects.filter(user=self.request.user)[0].organization
+            target.agent = Agent.objects.filter(
+                    user=self.request.user
+                )[0]
             
-        # else:
-        #     target.organization = self.request.user.userprofile
+        else:
+            target.organization = self.request.user.userprofile
 
         target.save()
         return super(TargetCreateView, self).form_valid(form)

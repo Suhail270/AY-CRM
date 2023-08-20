@@ -63,8 +63,8 @@ class TargetModelForm(forms.ModelForm):
             'target_points',
             'time_period',
             'for_org',
-            'agents',
-            'organization'
+            'agents'
+            # 'organization'
         )
         widgets = {
             "for_org": forms.CheckboxInput(),
