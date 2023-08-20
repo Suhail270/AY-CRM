@@ -241,9 +241,15 @@ class ConditionOperator(models.Model):
     def __str__(self):
         return str(self.option)
 
+class Module(models.Model):
+    option = models.CharField(max_length=100)
+    fields = models.ManyToManyField(Condition1, blank=True)
+
+    def __str__(self):
+        return str(self.option)
+
 class KPI(models.Model):
     name = models.CharField(max_length=100)
-    # kpi_lead = models.ForeignKey(Lead, null=True, blank=True, on_delete = models.SET_NULL)
     record_selection = models.ForeignKey(RecordSelection, null=True, blank=True, on_delete = models.SET_NULL)
     record_selection_range = models.ForeignKey(RecordSelectionRange, null=True, blank=True, on_delete = models.SET_NULL)
     condition1 = models.ForeignKey(Condition1, null= True, blank=True, on_delete=models.SET_NULL)
@@ -253,6 +259,8 @@ class KPI(models.Model):
     points_valueOfField = models.BooleanField(default=False, null=True, blank=True)
     recipient = models.ForeignKey(Recipient, null=True, blank=True, on_delete = models.SET_NULL)
     organization = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL)
+    module = models.ForeignKey(Module, null=True, blank=True, on_delete=models.CASCADE)
+    
     
 
     # def __str__(self):

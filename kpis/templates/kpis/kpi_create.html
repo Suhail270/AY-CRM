@@ -10,7 +10,7 @@
     </div>
 
     <h1 class="text-4xl text-gray-800">Create a new KPI</h1>
-    <form method="post" id="kpiForm" data-url="{% url 'kpis:ajax_load_cond2' %}" novalidate>
+    <form method="post" id="kpiForm" data-url="{% url 'kpis:ajax_load_cond2' %}" module-url="{% url 'kpis:ajax_load_cond1' %}" op-url="{% url 'kpis:ajax_load_cond_op' %}" novalidate>
         {% csrf_token %}
         {{ form|crispy }}
         <button type="submit" class="w-full text-white bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded-md">Submit</button>
@@ -20,19 +20,58 @@
 
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
   <script>
-    // console.log($("#div_id_condition1"));
-    $("[name='condition1']").change(function () {
-      console.log('here')
-      var url = $("#kpiForm").attr("data-url");
-      var fieldId = $(this).find("option:selected").text();
+    $("[id='div_id_condition2']").hide()
+    $("[id='div_id_condition2int']").hide()
+    $("[name='module']").change(function () {
+      var url = $("#kpiForm").attr("module-url");
+      var moduleId = $(this).find("option:selected").text();
     
       $.ajax({                       // initialize an AJAX request
         url: url,                    // set the url of the request
         data: {
-          'field': fieldId       // add the country id to the GET parameters
+          'module': moduleId       // add the country id to the GET parameters
         },
         success: function (data) {   // `data` is the return of the `load_cities` view function
-          $("[name='condition2']").html(data);  // replace the contents of the city input with the data that came from the server
+          $("[name='condition1']").html(data);  // replace the contents of the city input with the data that came from the server
+        }
+      });
+
+    });
+    $("[name='condition1']").change(function () {
+      var url = $("#kpiForm").attr("data-url");
+      var opUrl = $("#kpiForm").attr("op-url");
+      var fieldId = $(this).find("option:selected").text();
+    
+      $.ajax({
+        url: opUrl,
+        data: {
+          'field': fieldId,
+          'module': $("[name='module']").find("option:selected").text()
+        },
+        success: function (data) {
+          $("[name='conditionOp']").html(data.h);
+          if (data.foreign) {
+            $("[name='condition2']").prop('disabled', false)
+            $("[id='div_id_condition2']").show()
+            $("[name='condition2int']").prop('disabled', 'disabled')
+            $("[id='div_id_condition2int']").hide()
+          } else {
+            $("[name='condition2']").prop('disabled', 'disabled')
+            $("[id='div_id_condition2']").hide()
+            $("[name='condition2int']").prop('disabled', false)
+            $("[id='div_id_condition2int']").show()
+          }
+        }
+      });
+
+      $.ajax({
+        url: url,
+        data: {
+          'field': fieldId,
+          'module': $("[name='module']").find("option:selected").text()
+        },
+        success: function (data) {
+          $("[name='condition2']").html(data);
         }
       });
 
