@@ -25,7 +25,8 @@ from .models import (User,
                      Targets,
                      RepeatOptions,
                      Opportunities,
-                     Contacts)
+                     Contacts,
+                     Module)
 
 
 
@@ -65,4 +66,5 @@ admin.site.register(Targets)
 admin.site.register(RepeatOptions)
 admin.site.register(Opportunities)
 admin.site.register(Contacts)
+admin.site.register(Module)
 

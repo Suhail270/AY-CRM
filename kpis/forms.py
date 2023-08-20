@@ -1,5 +1,5 @@
 from django import forms
-from leads.models import (KPI, LeadSource, Targets)
+from leads.models import (KPI, LeadSource, Opportunities, Targets, UserProfile, Condition1, ConditionOperator, Condition2, Module, RecordSelection, Recipient)
 from django.db.models import ForeignKey
 
 def get_fk_model(model, fieldname):
@@ -12,6 +12,17 @@ def get_fk_model(model, fieldname):
 class RestrictedConditionInput():
     None
 
+class KpiForm(forms.Form):
+    name =  forms.CharField(max_length=100)
+    module = forms.ModelChoiceField(queryset=Module.objects.all())
+    record_selection = forms.ModelChoiceField(queryset=RecordSelection.objects.all())
+    points_per_record = forms.IntegerField()
+    recipient = forms.ModelChoiceField(queryset=Recipient.objects.all())
+    condition1 = forms.ChoiceField(label="Condition")
+    conditionOp = forms.ChoiceField(label=None)
+    condition2 = forms.ChoiceField(label=None, required=False)
+    condition2int = forms.IntegerField(required=False)
+
 class KpiModelForm(forms.ModelForm):
     # condition2 = None
 
@@ -19,6 +30,7 @@ class KpiModelForm(forms.ModelForm):
         model = KPI 
         fields = [
             "name",
+            "module",
             "record_selection",
             "points_per_record",
             "recipient",
@@ -36,13 +48,11 @@ class KpiModelForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['condition2'].queryset = []
-        self.fields['condition1'].label = "Record selection"
+        self.fields['condition1'].queryset = Condition1.objects.none()
+        self.fields['condition2'].queryset = Condition2.objects.none()
+        self.fields['condition1'].label = "Condition"
         self.fields['conditionOp'].label = ""
         self.fields['condition2'].label = ""
-
-# class KpiForm(forms.Form):
-#     None
 
 class TargetModelForm(forms.ModelForm):
     class Meta:
@@ -50,15 +60,53 @@ class TargetModelForm(forms.ModelForm):
         fields = (
             'name',
             'related_kpi',
+            'target_points',
             'time_period',
             'for_org',
-            'agents',
-            'organization'
+            'agents'
+            # 'organization'
         )
+        widgets = {
+            "for_org": forms.CheckboxInput(),
+            'agents': forms.CheckboxSelectMultiple()
+        }
 
     def clean_first_name(self):
         data = self.cleaned_data["name"]
         return data
 
-    def clean(self):
-        pass
+    # def clean(self):
+    #     pass
+
+    def __init__(self, *args, **kwargs):
+        print("HEEEEREREREERE")
+        self.user = kwargs.pop('user', None)
+        user_var = self.user
+        print("#########")
+        # print(self.user)
+        # print(self.user.userprofile)
+        print("########!")
+        super(TargetModelForm, self).__init__(*args, **kwargs)
+        self.fields['for_org'].label = "for entire organization?"
+        agent_queryset = UserProfile.objects.filter(
+            user__is_agent = True
+        ).filter(user__agent__organization=user_var.userprofile)
+        self.fields['agents'].queryset = agent_queryset
+        print("hereherehereherehereheerehere")
+        # if self.user.is_organizer:
+        #     # form.fields['agents'].queryset = UserProfile.objects.filter(
+        #     #     user__is_agent = True
+        #     # ).filter(user__agent__organization=user.userprofile)
+        #     self.fields['related_kpi'].queryset = KPI.objects.filter(
+        #         organization=self.user.userprofile
+        #     )
+        #     for thing in self.fields['agents'].queryset:
+        #         print(thing.user.is_agent)
+        #         print(thing.user.username)
+        # else:
+        #     self.fields['agents'].queryset = UserProfile.objects.filter(
+        #         user=self.user
+        #     )
+        #     self.fields['related_kpi'].queryset = KPI.objects.filter(
+        #         organization= self.user.agent.organization
+        #     )
