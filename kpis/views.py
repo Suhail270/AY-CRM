@@ -114,7 +114,7 @@ def load_targets(request):
         # dic['score'] = value
         # queryset.append(dic)
         module = eval(kpi.module.option)
-        field = str(kpi.condition1)
+        og_field = field = str(kpi.condition1)
 
         if kpi.record_selection.option == "created":
             record_select = "created_date__gte"
@@ -137,8 +137,12 @@ def load_targets(request):
             elif str(kpi.conditionOp) == "lower than or equal to":
                 field = field + "__lte"
             objects = module.objects.filter(**{field: field_val, record_select: cutoff})
-        # if kpi.asd
-        value = 1
+        if kpi.points_valueOfField:
+            value = 0
+            for obj in objects:
+                value += getattr(obj, og_field)
+        else:
+            value = objects.count() * kpi.points_per_record
         dic = model_to_dict(target)
         dic['score'] = value
         # if value != 0:
