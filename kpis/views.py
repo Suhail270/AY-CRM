@@ -1,6 +1,7 @@
 from typing import Any, Dict
 from django.shortcuts import render, reverse
 from django.contrib import messages
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.template.loader import render_to_string
 import datetime
 from django.views import generic
@@ -405,7 +406,7 @@ class TargetCreateView(generic.CreateView):
         target.save()
         return super(TargetCreateView, self).form_valid(form)
     
-class TargetUpdateView(generic.UpdateView):
+class TargetUpdateView(UserPassesTestMixin, generic.UpdateView):
     template_name = 'kpis/target_update.html'
     form_class = TargetModelForm
 
@@ -427,18 +428,13 @@ class TargetUpdateView(generic.UpdateView):
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         user = self.request.user
-
-        if user.is_organizer:
-            # Customize your form fields based on user type (organizer)
-            pass
-        else:
-            organization = Agent.objects.filter(user=user)[0].organization
-
-            # Customize your form fields based on user type (agent)
-            pass
-
+        #ORGANIZER RIGHTS!!!!!!
         return form
-
+    
+    def test_func(self):
+        #TEST USER HAS TO PASS
+        return self.request.user.is_organizer
+        
     def form_valid(self, form):
 
         target_before_update = self.get_object()
