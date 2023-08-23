@@ -30,13 +30,21 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {{ target.time_period }}
                         </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <a href="{% url 'kpis:target-update' target.id %}" class="text-indigo-600 hover:text-indigo-900">
+                                Edit
+                            </a>
+                        </td>
                     </tr>
                 {% empty %}
-
-                <p>There are currently no Targets</p>
-
+                    <tr class="bg-white">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" colspan="4">
+                            There are currently no Targets
+                        </td>
+                    </tr>
                 {% endfor %}
             </tbody>
+            
         </table>
         </div>
     </div>

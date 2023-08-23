@@ -1,5 +1,6 @@
 from typing import Any, Dict
 from django.shortcuts import render, reverse
+from django.contrib import messages
 from django.template.loader import render_to_string
 import datetime
 from django.views import generic
@@ -12,6 +13,7 @@ from .forms import (
 )
 from django.db.models import ForeignKey
 from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.apps import apps
 
 def get_foreign(model, field_name):
     if field_name == "---------":
@@ -56,14 +58,14 @@ def load_list_contents(request):
                 field_val = kpi.condition2
             else:
                 field_val = model.objects.get(pk=kpi.condition2)
-            objects = module.objects.filter(**{field: field_val, record_select: cutoff})
+            objects = module.objects.filter(**{field: field_val})#, record_select: cutoff})
         else:
             field_val = kpi.condition2
             if str(kpi.conditionOp) == "greater than or equal to":
                 field = field + "__gte"
             elif str(kpi.conditionOp) == "lower than or equal to":
                 field = field + "__lte"
-            objects = module.objects.filter(**{field: field_val, record_select: cutoff})
+            objects = module.objects.filter(**{field: field_val})#, record_select: cutoff})
         if kpi.points_valueOfField:
             value = 0
             for obj in objects:
@@ -113,8 +115,13 @@ def load_targets(request):
         # dic = model_to_dict(target)
         # dic['score'] = value
         # queryset.append(dic)
-        module = eval(kpi.module.option)
+
+
+        # module = eval(kpi.module.option)
+        module_class = KPI
         og_field = field = str(kpi.condition1)
+        kpi_module = kpi.module.option
+        module_class = apps.get_model(app_label='leads', model_name='Targets')
 
         if kpi.record_selection.option == "created":
             record_select = "created_date__gte"
@@ -124,19 +131,21 @@ def load_targets(request):
             record_select = "converted_date__gte"
 
         if str(kpi.conditionOp) == "is":
-            model = get_foreign(module, field)
+            model = get_foreign(module_class, field)
             if model == None:
                 field_val = kpi.condition2
             else:
                 field_val = model.objects.get(pk=kpi.condition2)
-            objects = module.objects.filter(**{field: field_val, record_select: cutoff})
+            # objects = module_class.objects.filter(**{field: field_val, record_select: cutoff})
+            objects = module_class.objects.filter(**{field: field_val})
         else:
             field_val = kpi.condition2
             if str(kpi.conditionOp) == "greater than or equal to":
                 field = field + "__gte"
             elif str(kpi.conditionOp) == "lower than or equal to":
                 field = field + "__lte"
-            objects = module.objects.filter(**{field: field_val, record_select: cutoff})
+            # objects = module.objects.filter(**{field: field_val, record_select: cutoff})
+            objects = module_class.objects.filter(**{field: field_val})
         if kpi.points_valueOfField:
             value = 0
             for obj in objects:
@@ -147,7 +156,6 @@ def load_targets(request):
         dic['score'] = value
         # if value != 0:
         queryset.append(dic)
-    
     return render(request, 'kpis/target_list_contents.html', {"targets": queryset})
 
 
@@ -397,4 +405,44 @@ class TargetCreateView(generic.CreateView):
         target.save()
         return super(TargetCreateView, self).form_valid(form)
     
-       
+class TargetUpdateView(generic.UpdateView):
+    template_name = 'kpis/target_update.html'
+    form_class = TargetModelForm
+
+    def get_success_url(self):
+        return reverse("kpis:target-list")
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_organizer:
+            return Targets.objects.filter(organization=user.userprofile)
+        else:
+            return Targets.objects.filter(organization=Agent.objects.filter(user=user)[0].organization)
+    
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        user = self.request.user
+
+        if user.is_organizer:
+            # Customize your form fields based on user type (organizer)
+            pass
+        else:
+            organization = Agent.objects.filter(user=user)[0].organization
+
+            # Customize your form fields based on user type (agent)
+            pass
+
+        return form
+
+    def form_valid(self, form):
+
+        target_before_update = self.get_object()
+        instance = form.save(commit=False)
+        messages.info(self.request, "You have successfully edited this target")
+        instance.save()
+        return super(TargetUpdateView, self).form_valid(form)
