@@ -25,36 +25,36 @@ class KpiForm(forms.Form):
     condition2 = forms.ChoiceField(label="", required=False)
     condition2int = forms.IntegerField(required=False)
 
-class KpiModelForm(forms.ModelForm):
-    # condition2 = None
+# class KpiModelForm(forms.ModelForm):
+#     # condition2 = None
 
-    class Meta:
-        model = KPI 
-        fields = [
-            "name",
-            "module",
-            "record_selection",
-            "points_per_record",
-            "recipient",
-            "condition1",
-            "conditionOp",
-            "condition2"
-        ]
-        widgets = {
-            "condition2": forms.Select(),
-            "points_valueOfField": forms.CheckboxInput()
-        }
+#     class Meta:
+#         model = KPI 
+#         fields = [
+#             "name",
+#             "module",
+#             "record_selection",
+#             "points_per_record",
+#             "recipient",
+#             "condition1",
+#             "conditionOp",
+#             "condition2"
+#         ]
+#         widgets = {
+#             "condition2": forms.Select(),
+#             "points_valueOfField": forms.CheckboxInput()
+#         }
 
-    def clean(self):
-        pass
+#     def clean(self):
+#         pass
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['condition1'].queryset = Condition1.objects.none()
-        self.fields['condition2'].queryset = Condition2.objects.none()
-        self.fields['condition1'].label = "Condition"
-        self.fields['conditionOp'].label = ""
-        self.fields['condition2'].label = ""
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.fields['condition1'].queryset = Condition1.objects.none()
+#         self.fields['condition2'].queryset = Condition2.objects.none()
+#         self.fields['condition1'].label = "Condition"
+#         self.fields['conditionOp'].label = ""
+#         self.fields['condition2'].label = ""
 
 class TargetModelForm(forms.ModelForm):
     class Meta:

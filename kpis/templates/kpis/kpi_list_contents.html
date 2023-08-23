@@ -24,6 +24,12 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {{ kpi.value }}
                     </td>
+                    {% comment %} <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <ul>
+                            {% for agent in kpi.agents %}
+                            <li>{{ agent }}<li>
+                        </ul>
+                    </td> {% endcomment %}
                     
                 </tr>
             {% empty %}

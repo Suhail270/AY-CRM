@@ -13,6 +13,9 @@
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Period
                     </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Participants
+                    </th>
                     <th scope="col" class="relative px-6 py-3">
                     <span class="sr-only">Edit</span>
                     </th>
@@ -29,6 +32,15 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {{ target.time_period }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <ul>
+                                {% for agent in target.agents %}
+                                <li>{{ agent.user.email }}<li>
+                                {% empty %}
+                                <li>Unassigned<li>
+                                {% endfor %}
+                            </ul>
                         </td>
                     </tr>
                 {% empty %}

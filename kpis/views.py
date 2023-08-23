@@ -6,7 +6,7 @@ from django.views import generic
 from leads.models import KPI, Targets, Lead, LeadSource, Agent, UserProfile, Module, Condition1, Condition2, ConditionOperator, Opportunities
 from django.forms.models import BaseModelForm, model_to_dict
 from .forms import (
-    KpiModelForm,
+    # KpiModelForm,
     KpiForm,
     TargetModelForm
 )
@@ -29,6 +29,12 @@ def get_foreign(model, field_name):
 
 def load_list_contents(request):
     period = int(request.GET.get("period"))
+    agent_id = int(request.GET.get("agent"))
+
+    if agent_id == -1:
+        agent = None
+    else:
+        agent = Agent.objects.get(pk=agent_id)
 
     if request.user.is_organizer:
         organization = request.user.userprofile
@@ -56,14 +62,16 @@ def load_list_contents(request):
                 field_val = kpi.condition2
             else:
                 field_val = model.objects.get(pk=kpi.condition2)
-            objects = module.objects.filter(**{field: field_val, record_select: cutoff})
         else:
             field_val = kpi.condition2
             if str(kpi.conditionOp) == "greater than or equal to":
                 field = field + "__gte"
             elif str(kpi.conditionOp) == "lower than or equal to":
                 field = field + "__lte"
+        if agent == None:
             objects = module.objects.filter(**{field: field_val, record_select: cutoff})
+        else:
+            objects = module.objects.filter(**{field: field_val, record_select: cutoff, 'agent': agent})
         if kpi.points_valueOfField:
             value = 0
             for obj in objects:
@@ -78,12 +86,22 @@ def load_list_contents(request):
     return render(request, 'kpis/kpi_list_contents.html', {"kpis": queryset})
 
 def load_targets(request):
+    agent_id = int(request.GET.get("agent"))
+    
+    if agent_id == -1:
+        agent = None
+    else:
+        agent = UserProfile.objects.get(user=Agent.objects.get(pk=agent_id).user)
+    
     if request.user.is_organizer:
         organization = request.user.userprofile
     else:
         organization = request.user.agent.organization
     
-    targets = Targets.objects.filter(organization = organization)
+    if agent == None:
+        targets = Targets.objects.filter(organization = organization)
+    else:
+        targets = Targets.objects.filter(organization = organization, agents = agent)
     
     queryset = []
     for target in targets:
@@ -99,20 +117,6 @@ def load_targets(request):
         elif period_str == "Yearly":
             period = 365
         cutoff = datetime.date.today() - datetime.timedelta(days=period)
-        # field = str(kpi.condition1)
-        # if kpi.record_selection.option == "created":
-        #     record_select = "created_date__gte"
-        # elif kpi.record_selection.option == "modified":
-        #     record_select = "last_updated_date__gte"
-        # elif kpi.record_selection.option == "converted":
-        #     record_select = "converted_date__gte"
-        # if str(kpi.conditionOp) == "is":
-        #     field_val = get_foreign(Lead, field).objects.get(pk=kpi.condition2)
-        #     value = Lead.objects.filter(**{field: field_val, record_select: cutoff}).count()
-        #     value = value * kpi.points_per_record
-        # dic = model_to_dict(target)
-        # dic['score'] = value
-        # queryset.append(dic)
         module = eval(kpi.module.option)
         og_field = field = str(kpi.condition1)
 
@@ -129,14 +133,13 @@ def load_targets(request):
                 field_val = kpi.condition2
             else:
                 field_val = model.objects.get(pk=kpi.condition2)
-            objects = module.objects.filter(**{field: field_val, record_select: cutoff})
         else:
             field_val = kpi.condition2
             if str(kpi.conditionOp) == "greater than or equal to":
                 field = field + "__gte"
             elif str(kpi.conditionOp) == "lower than or equal to":
                 field = field + "__lte"
-            objects = module.objects.filter(**{field: field_val, record_select: cutoff})
+        objects = module.objects.filter(**{field: field_val, record_select: cutoff})
         if kpi.points_valueOfField:
             value = 0
             for obj in objects:
@@ -150,6 +153,18 @@ def load_targets(request):
     
     return render(request, 'kpis/target_list_contents.html', {"targets": queryset})
 
+def load_agents (request):
+    if request.user.is_organizer:
+        organization = request.user.userprofile
+        agents = Agent.objects.filter(organization=organization)
+    else:
+        agents = Agent.objects.filter(user=request.user)
+    dics = []
+    for agent in agents:
+        dic = model_to_dict(agent)
+        dic['str'] = agent
+        dics.append(dic)
+    return render(request, 'kpis/kpi_dropdown_agents.html', {'agents': dics})
 
 def load_cond1(request):
     module_option = request.GET.get('module')
