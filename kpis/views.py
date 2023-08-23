@@ -428,7 +428,11 @@ class TargetUpdateView(UserPassesTestMixin, generic.UpdateView):
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         user = self.request.user
-        #ORGANIZER RIGHTS!!!!!!
+        
+        if not user.is_organizer:
+            organization = Agent.objects.get(user=user).organization
+            form.fields['agents'].queryset = UserProfile.objects.filter(
+            user__is_agent=True, user__agent__organization=organization)
         return form
     
     def test_func(self):
