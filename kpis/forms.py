@@ -38,10 +38,10 @@ class KpiModelForm(forms.ModelForm):
             "recipient",
             "condition1",
             "conditionOp",
-            "condition2"
+            # "condition2"
         ]
         widgets = {
-            "condition2": forms.Select(),
+            # "condition2": forms.Select(),
             "points_valueOfField": forms.CheckboxInput()
         }
 
@@ -49,12 +49,13 @@ class KpiModelForm(forms.ModelForm):
         pass
 
     def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
-        self.fields['condition1'].queryset = Condition1.objects.none()
-        self.fields['condition2'].queryset = Condition2.objects.none()
+        # self.fields['condition1'].queryset = Condition1.objects.none()
+        # self.fields['condition2'].queryset = Condition2.objects.none()
         self.fields['condition1'].label = "Condition"
-        self.fields['conditionOp'].label = ""
-        self.fields['condition2'].label = ""
+        self.fields['conditionOp'].label = "Condition Operator"
+        # self.fields['condition2'].label = ""
 
 class TargetModelForm(forms.ModelForm):
     class Meta:

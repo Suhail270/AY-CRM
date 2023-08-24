@@ -1,7 +1,7 @@
 
 from django.urls import path
 from .views import (
-    KpiListView, KpiCreateView, TargetCreateView, TargetListView, TargetUpdateView, load_cond2, load_cond1, load_cond_op, load_list_contents, load_targets
+    KpiListView, KpiCreateView, KpiUpdateView, TargetCreateView, TargetListView, TargetUpdateView, load_cond2, load_cond1, load_cond_op, load_list_contents, load_targets
 )
 
 app_name = "kpis"
@@ -9,6 +9,7 @@ app_name = "kpis"
 urlpatterns = [
     path('', KpiListView.as_view(), name='kpi-list'),
     path('create-kpi', KpiCreateView.as_view(), name='kpi-create'),
+    path('<int:pk>/update', KpiUpdateView.as_view(), name='kpi-update'),
     path('list-targets', TargetListView.as_view(), name='target-list'),
     path('create-target', TargetCreateView.as_view(), name='target-create'),
     path('target/<int:pk>/update/', TargetUpdateView.as_view(), name='target-update'),
