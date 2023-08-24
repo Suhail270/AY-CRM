@@ -1,5 +1,7 @@
 from typing import Any, Dict
 from django.shortcuts import render, reverse
+from django.contrib import messages
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.template.loader import render_to_string
 import datetime
 from django.views import generic
@@ -12,6 +14,7 @@ from .forms import (
 )
 from django.db.models import ForeignKey
 from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.apps import apps
 
 def get_foreign(model, field_name):
     if field_name == "---------":
@@ -48,7 +51,7 @@ def load_list_contents(request):
     for kpi in kpis:
         module = eval(kpi.module.option)
         og_field = field = str(kpi.condition1)
-
+        print("OG FIRLED:", field)
         if kpi.record_selection.option == "created":
             record_select = "created_date__gte"
         elif kpi.record_selection.option == "modified":
@@ -119,7 +122,6 @@ def load_targets(request):
         cutoff = datetime.date.today() - datetime.timedelta(days=period)
         module = eval(kpi.module.option)
         og_field = field = str(kpi.condition1)
-
         if kpi.record_selection.option == "created":
             record_select = "created_date__gte"
         elif kpi.record_selection.option == "modified":
@@ -127,6 +129,7 @@ def load_targets(request):
         elif kpi.record_selection.option == "converted":
             record_select = "converted_date__gte"
 
+        
         if str(kpi.conditionOp) == "is":
             model = get_foreign(module, field)
             if model == None:
@@ -165,6 +168,7 @@ def load_agents (request):
         dic['str'] = agent
         dics.append(dic)
     return render(request, 'kpis/kpi_dropdown_agents.html', {'agents': dics})
+  
 
 def load_cond1(request):
     module_option = request.GET.get('module')
@@ -330,6 +334,42 @@ class KpiCreateView(generic.FormView):
         kpi.save()
         return super(KpiCreateView, self).form_valid(form)
 
+class KpiUpdateView(generic.UpdateView):
+    template_name = 'kpis/kpi_update.html'
+    form_class = KpiModelForm
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_organizer:
+            return KPI.objects.filter(organization=user.userprofile)
+        else:
+            return KPI.objects.filter(organization=Agent.objects.filter(user=user)[0].organization)
+    
+    def get_success_url(self):
+        return reverse("kpis:kpi-list")
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+    
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        user = self.request.user
+
+        if not user.is_organizer:
+            organization = Agent.objects.get(user=user).organization
+            form.fields['agents'].queryset = UserProfile.objects.filter(
+            user__is_agent=True, user__agent__organization=organization)
+
+        return form
+
+    def form_valid(self, form):
+        kpi_before_edit = self.get_object()
+        instance = form.save(commit=False)
+        messages.info(self.request, "You have successfully edited this KPI")
+        instance.save()
+        return super(KpiUpdateView, self).form_valid(form)
 
 class TargetListView(generic.TemplateView):
     template_name = "kpis/target_list.html"
@@ -378,7 +418,7 @@ class TargetCreateView(generic.CreateView):
         #     form.fields['related_kpi'].queryset = KPI.objects.filter(
         #         organization=user.userprofile
         #     )
-        #     for thing in form.fields['agents'].queryset:
+        #     for thing in form.fields['agents'].queryset: 
         #         print(thing.user.is_agent)
         #         print(thing.user.username)
         # else:
@@ -412,4 +452,43 @@ class TargetCreateView(generic.CreateView):
         target.save()
         return super(TargetCreateView, self).form_valid(form)
     
-       
+class TargetUpdateView(UserPassesTestMixin, generic.UpdateView):
+    template_name = 'kpis/target_update.html'
+    form_class = TargetModelForm
+
+    def get_success_url(self):
+        return reverse("kpis:target-list")
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_organizer:
+            return Targets.objects.filter(organization=user.userprofile)
+        else:
+            return Targets.objects.filter(organization=Agent.objects.filter(user=user)[0].organization)
+    
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        user = self.request.user
+        
+        if not user.is_organizer:
+            organization = Agent.objects.get(user=user).organization
+            form.fields['agents'].queryset = UserProfile.objects.filter(
+            user__is_agent=True, user__agent__organization=organization)
+        return form
+    
+    def test_func(self):
+        #TEST USER HAS TO PASS
+        return self.request.user.is_organizer
+        
+    def form_valid(self, form):
+
+        target_before_update = self.get_object()
+        instance = form.save(commit=False)
+        messages.info(self.request, "You have successfully edited this target")
+        instance.save()
+        return super(TargetUpdateView, self).form_valid(form)
