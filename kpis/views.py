@@ -8,7 +8,7 @@ from django.views import generic
 from leads.models import KPI, Targets, Lead, LeadSource, Agent, UserProfile, Module, Condition1, Condition2, ConditionOperator, Opportunities
 from django.forms.models import BaseModelForm, model_to_dict
 from .forms import (
-    KpiModelForm,
+    # KpiModelForm,
     KpiForm,
     TargetModelForm
 )
@@ -32,12 +32,12 @@ def get_foreign(model, field_name):
 
 def load_list_contents(request):
     period = int(request.GET.get("period"))
-    # agent_id = int(request.GET.get("agent"))
+    agent_id = int(request.GET.get("agent"))
 
-    # if agent_id == -1:
-    #     agent = None
-    # else:
-    #     agent = Agent.objects.get(pk=agent_id)
+    if agent_id == -1:
+        agent = None
+    else:
+        agent = Agent.objects.get(pk=agent_id)
 
     if request.user.is_organizer:
         organization = request.user.userprofile
@@ -71,10 +71,10 @@ def load_list_contents(request):
                 field = field + "__gte"
             elif str(kpi.conditionOp) == "lower than or equal to":
                 field = field + "__lte"
-        # if agent == None:
-        objects = module.objects.filter(**{field: field_val, record_select: cutoff})
-        # else:
-        #     objects = module.objects.filter(**{field: field_val, record_select: cutoff, 'agent': agent})
+        if agent == None:
+            objects = module.objects.filter(**{field: field_val, record_select: cutoff})
+        else:
+            objects = module.objects.filter(**{field: field_val, record_select: cutoff, 'agent': agent})
         if kpi.points_valueOfField:
             value = 0
             for obj in objects:
@@ -89,23 +89,23 @@ def load_list_contents(request):
     return render(request, 'kpis/kpi_list_contents.html', {"kpis": queryset})
 
 def load_targets(request):
-    # agent_id = int(request.GET.get("agent"))
+    agent_id = int(request.GET.get("agent"))
     
-    # if agent_id == -1:
-    #     agent = None
-    # else:
-    #     agent = UserProfile.objects.get(user=Agent.objects.get(pk=agent_id).user)
+    if agent_id == -1:
+        agent = None
+    else:
+        agent = UserProfile.objects.get(user=Agent.objects.get(pk=agent_id).user)
     
     if request.user.is_organizer:
         organization = request.user.userprofile
     else:
         organization = request.user.agent.organization
     
-    # if agent == None:
-    #     targets = Targets.objects.filter(organization = organization)
-    # else:
-    #     targets = Targets.objects.filter(organization = organization, agents = agent)
-    targets = Targets.objects.filter(organization = organization)
+    if agent == None:
+        targets = Targets.objects.filter(organization = organization)
+    else:
+        targets = Targets.objects.filter(organization = organization, agents = agent)
+    
     queryset = []
     for target in targets:
         kpi = target.related_kpi
@@ -168,7 +168,7 @@ def load_agents (request):
         dic['str'] = agent
         dics.append(dic)
     return render(request, 'kpis/kpi_dropdown_agents.html', {'agents': dics})
-
+  
 
 def load_cond1(request):
     module_option = request.GET.get('module')
