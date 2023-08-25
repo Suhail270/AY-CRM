@@ -121,7 +121,7 @@ def load_targets(request):
     if agent == None:
         targets = Targets.objects.filter(organization = organization)
     else:
-        targets = Targets.objects.filter(organization = organization, agents = agent)
+        targets = Targets.objects.filter(organization = organization, agents = agent) | Targets.objects.filter(organization = organization, for_org = True)
     
     queryset = []
     for target in targets:
