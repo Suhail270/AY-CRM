@@ -1,5 +1,6 @@
 import logging
 import datetime
+from typing import Any, Dict
 from django import contrib
 from django.contrib import messages
 from django.core.mail import send_mail
@@ -645,7 +646,23 @@ class OpportunityListView(LoginRequiredMixin, generic.ListView):
 class OpportunityConvertView(LoginRequiredMixin, generic.CreateView):
     template_name = "leads/opportunity_convert.html"
     form_class = OpportunityModelForm
-
+     
+    def get_initial(self):
+        curr_lead = Lead.objects.get(pk=self.kwargs["pk"])
+        name = curr_lead.name
+        description = curr_lead.description
+        status = Category.objects.get(name="Converted")
+        organization = curr_lead.organization
+        source = curr_lead.source
+        agent = curr_lead.agent
+        party = curr_lead.party
+        
+        return {
+            "name": name,
+            "description": description,
+            "status": Category.objects.get(name="Converted"),
+            "source": source,
+        }
     def get_success_url(self):
         return reverse("leads:lead-detail", kwargs={"pk": self.kwargs["pk"]})
 

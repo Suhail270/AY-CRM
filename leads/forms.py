@@ -83,16 +83,16 @@ class FollowUpModelForm(forms.ModelForm):
 
 class OpportunityModelForm(forms.ModelForm):
     class Meta:
+        
         model = Opportunities
         fields = (
-            # 'name',
-            # 'description',
-            # 'status',
-            # 'source',
-            # 'agent',
-            # 'party',
+            'name',
+            'description',
+            'status',
+            'source',
             'deal_amount',
         )
+        
 
 class OpportunityUpdateModelForm(forms.ModelForm):
     class Meta:
