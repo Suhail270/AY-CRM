@@ -159,7 +159,10 @@ def load_targets(request):
                 field = field + "__gte"
             elif str(kpi.conditionOp) == "lower than or equal to":
                 field = field + "__lte"
-        objects = module.objects.filter(**{field: field_val, record_select: cutoff})
+        if agent == None:
+            objects = module.objects.filter(**{field: field_val, record_select: cutoff})
+        else:
+            objects = module.objects.filter(**{field: field_val, record_select: cutoff, 'agent': Agent.objects.get(user=agent.user)})
         if kpi.points_valueOfField:
             value = 0
             for obj in objects:
@@ -271,6 +274,91 @@ class KpiListView(generic.TemplateView):
 
 
 class KpiCreateView(generic.FormView):
+    template_name = "kpis/kpi_create.html"
+    form_class = KpiForm
+
+    def get_success_url(self):
+        return reverse("kpis:kpi-list")
+
+    def get_form(self, form_class=None):
+        print([f.name for f in KPI._meta.get_fields()])
+        form = super().get_form(form_class)
+
+        return form
+    
+    def post(self, request, *args, **kwargs):
+        """
+        Handle POST requests: instantiate a form instance with the passed
+        POST variables and then check if it's valid.
+        """
+        form = self.get_form()
+        print(request.POST.get('condition1'))
+        print(request.POST.get('conditionOp'))
+        print(request.POST.get('condition2'))
+        condition1 = request.POST.get('condition1')
+        conditionOp = request.POST.get('conditionOp')
+        condition2 = request.POST.get('condition2')
+        # form.fields['condition1'].choices = [(Condition1.objects.get(pk=condition1), condition1)]
+        # form.fields['conditionOp'].choices = [(ConditionOperator.objects.get(pk=conditionOp), conditionOp)]
+        # form.fields['condition2'].choices = [(Condition2.objects.get(pk=condition2), condition2)]
+        form.fields['condition1'].choices = [(condition1, condition1)]
+        form.fields['conditionOp'].choices = [(conditionOp, conditionOp)]
+        form.fields['condition2'].choices = [(condition2, condition2)]
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+    
+    # def post(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
+    #     print(request.POST.get('condition1'))
+    #     print(request.POST.get('conditionOp'))
+    #     print(request.POST.get('condition2'))
+        
+    #     return super().post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        name = form.cleaned_data["name"]
+        module = form.cleaned_data["module"]
+        record_selection = form.cleaned_data["record_selection"]
+        points_per_record = form.cleaned_data["points_per_record"]
+        # recipient= form.cleaned_data["recipient"]
+        condition1 = form.cleaned_data["condition1"]
+        conditionOp = form.cleaned_data["conditionOp"]
+        points_valueOfField = form.cleaned_data["points_valueOfField"]
+        # condition2 = form.cleaned_data["condition2"]
+
+        if points_per_record == 0 or points_per_record == None:
+            points_per_record = 1
+
+        module_class = eval(module.option)
+        field = str(Condition1.objects.get(pk=condition1))
+        if get_foreign(module_class, field) == None:
+            condition2 = form.cleaned_data["condition2int"]
+        else:
+            condition2 = form.cleaned_data["condition2"]
+
+        kpi = KPI(
+            name=name,
+            module=module,
+            record_selection=record_selection,
+            points_per_record=points_per_record,
+            # recipient=recipient,
+            condition1=Condition1.objects.get(pk=condition1),
+            conditionOp=ConditionOperator.objects.get(pk=conditionOp),
+            # conditionOp=conditionOp,
+            condition2=condition2,
+            points_valueOfField=points_valueOfField
+        )
+        user = self.request.user
+        if user.is_organizer:
+            organization = user.userprofile
+        else:
+            organization = user.agent.organization
+        kpi.organization = organization
+        kpi.save()
+        return super(KpiCreateView, self).form_valid(form)
+
+class KpiUpdateViewNew(generic.FormView):
     template_name = "kpis/kpi_create.html"
     form_class = KpiForm
 
