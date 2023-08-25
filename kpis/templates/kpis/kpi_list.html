@@ -87,7 +87,10 @@
                 'agent': agent
               },
               success: function (data) {
-                $("#list-contents").html(data);
+                $("#list-contents").html(data.h);
+                if (data.is_agent) {
+                  $('#selectAgent').hide()
+                }
               }
             });
         }

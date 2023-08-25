@@ -8,7 +8,7 @@ from django.views import generic
 from leads.models import KPI, Targets, Lead, LeadSource, Agent, UserProfile, Module, Condition1, Condition2, ConditionOperator, Opportunities
 from django.forms.models import BaseModelForm, model_to_dict
 from .forms import (
-    # KpiModelForm,
+    KpiModelForm,
     KpiForm,
     TargetModelForm
 )
@@ -33,11 +33,21 @@ def get_foreign(model, field_name):
 def load_list_contents(request):
     period = int(request.GET.get("period"))
     agent_id = int(request.GET.get("agent"))
+    is_agent = False
 
     if agent_id == -1:
         agent = None
     else:
         agent = Agent.objects.get(pk=agent_id)
+    
+    if request.user.is_agent:
+        agent = Agent.objects.get(user=request.user)
+        is_agent = True
+    else:
+        if agent_id == -1:
+            agent = None
+        else:
+            agent = Agent.objects.get(pk=agent_id)
 
     if request.user.is_organizer:
         organization = request.user.userprofile
@@ -86,15 +96,22 @@ def load_list_contents(request):
         # if value != 0:
         queryset.append(dic)
 
-    return render(request, 'kpis/kpi_list_contents.html', {"kpis": queryset})
+    # return render(request, 'kpis/kpi_list_contents.html', {"kpis": queryset})
+    return JsonResponse({"h": render_to_string(request=request, template_name='kpis/kpi_list_contents.html', context={"kpis": queryset, "is_agent": is_agent}), "is_agent": is_agent})
+
 
 def load_targets(request):
     agent_id = int(request.GET.get("agent"))
+    is_agent = False
     
-    if agent_id == -1:
-        agent = None
+    if request.user.is_agent:
+        agent = UserProfile.objects.get(user=request.user)
+        is_agent = True
     else:
-        agent = UserProfile.objects.get(user=Agent.objects.get(pk=agent_id).user)
+        if agent_id == -1:
+            agent = None
+        else:
+            agent = UserProfile.objects.get(user=Agent.objects.get(pk=agent_id).user)
     
     if request.user.is_organizer:
         organization = request.user.userprofile
@@ -153,8 +170,12 @@ def load_targets(request):
         dic['score'] = value
         # if value != 0:
         queryset.append(dic)
+    print(queryset)
+    print(is_agent)
     
-    return render(request, 'kpis/target_list_contents.html', {"targets": queryset})
+    # return render(request, 'kpis/target_list_contents.html', {"targets": queryset, "is_agent": is_agent})
+    return JsonResponse({"h": render_to_string(request=request, template_name='kpis/target_list_contents.html', context={"targets": queryset, "is_agent": is_agent}), "is_agent": is_agent})
+
 
 def load_agents (request):
     if request.user.is_organizer:

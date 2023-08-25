@@ -1,32 +1,30 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <section class="text-gray-700 body-font">
-        <div class="container px-5 py-24 mx-auto flex flex-wrap">
-            <div class="w-full mb-6 py-6 flex justify-between items-center border-b border-gray-200">
-                <div>
-                    <h1 class="text-4xl text-gray-800">Targets</h1>
-                </div>
-                {%if request.user.is_organizer%}
-                <div>
-                    <select id="selectAgent" data-url="{% url 'kpis:ajax_load_agents' %}">
-                        <option value=-1>Organization</option>
-                    </select>
-                </div>
-                <div>
-                    <a class="text-gray-500 hover:text-blue-500" href="{% url 'kpis:target-create' %}">Create a new Target</a>
-                </div>
-                {%endif%}
-            </div>
+<section class="text-gray-700 body-font">
+  <div class="container px-5 py-24 mx-auto flex flex-wrap">
+      <div class="w-full mb-6 py-6 flex justify-between items-center border-b border-gray-200">
+          <div>
+              <h1 class="text-4xl text-gray-800">Targets</h1>
+          </div>
+          <div>
+              <select id="selectAgent" data-url="{% url 'kpis:ajax_load_agents' %}">
+                  <option value=-1>Organization</option>
+              </select>
+          </div>
+          <div>
+              <a class="text-gray-500 hover:text-blue-500" href="{% url 'kpis:target-create' %}">Create a new Target</a>
+          </div>
+      </div>
 
-            <div id="list-contents" data-url="{% url 'kpis:ajax_load_targets' %}" class="flex flex-col w-full">
-            </div>
-            </div> {% endcomment %}
-            <div id="error-message" class="text-red-500"></div>
-        </div>
+      <div id="list-contents" data-url="{% url 'kpis:ajax_load_targets' %}" class="flex flex-col w-full">
+      </div>
+      </div>
+      <div id="error-message" class="text-red-500"></div>
+  </div>
 
-    </div>
-    </section>
+</div>
+</section>
 
       <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
 
@@ -38,7 +36,10 @@
               url: url,
               data: {'agent': agent},
               success: function (data) {
-                $("#list-contents").html(data);
+                $("#list-contents").html(data.h);
+                if (data.is_agent) {
+                  $('#selectAgent').css("height", 0);
+                }
               },
               error: function (xhr, status, error) {
                 $("#error-message").text("Error fetching target data: " + error);
