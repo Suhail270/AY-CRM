@@ -1,18 +1,18 @@
 <!-- tasks_list.html -->
 {% extends "base.html" %}
 {% load tailwind_filters %}
+{% load static %}
 
 {% block content %}
 <div class="max-w-6xl mx-auto">
-    <div
-      class="w-full mb-6 py-6 flex justify-between items-center border-b border-gray-200"
-    >
+    <div class="w-full mb-6 py-6 flex justify-between items-center border-b border-gray-200">
       <div>
         <h1 class="text-4xl text-gray-800">Tasks</h1>
       </div>
       <div>
         
       </div>
+
     </div>
     <div class="grid grid-cols-3 gap-4 mt-8">
         <div class="column">
@@ -147,6 +147,12 @@
     .table-scroll th {
         background-color: #f2f2f2;
         font-weight: bold;
+    }
+    .ml-2 {
+        margin-left: 100px; /* Adjust the value as needed */
+    }
+    .mr-2 {
+        margin-left: 920px; /* Adjust the value as needed */
     }
 
 </style>

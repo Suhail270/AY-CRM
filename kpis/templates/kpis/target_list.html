@@ -7,6 +7,7 @@
                 <div>
                     <h1 class="text-4xl text-gray-800">Targets</h1>
                 </div>
+                {%if request.user.is_organizer%}
                 <div>
                     <select id="selectAgent" data-url="{% url 'kpis:ajax_load_agents' %}">
                         <option value=-1>Organization</option>
@@ -15,6 +16,7 @@
                 <div>
                     <a class="text-gray-500 hover:text-blue-500" href="{% url 'kpis:target-create' %}">Create a new Target</a>
                 </div>
+                {%endif%}
             </div>
 
             <div id="list-contents" data-url="{% url 'kpis:ajax_load_targets' %}" class="flex flex-col w-full">
