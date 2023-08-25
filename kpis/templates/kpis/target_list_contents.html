@@ -13,6 +13,9 @@
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Period
                     </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Participants
+                    </th>
                     <th scope="col" class="relative px-6 py-3">
                     <span class="sr-only">Edit</span>
                     </th>
@@ -30,13 +33,30 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {{ target.time_period }}
                         </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <ul>
+                                {% for agent in target.agents %}
+                                <li>{{ agent.user.email }}<li>
+                                {% empty %}
+                                <li>Unassigned<li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <a href="{% url 'kpis:target-update' target.id %}" class="text-indigo-600 hover:text-indigo-900">
+                                Edit
+                            </a>
+                      </td>
                     </tr>
                 {% empty %}
-
-                <p>There are currently no Targets</p>
-
+                    <tr class="bg-white">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" colspan="4">
+                            There are currently no Targets
+                        </td>
+                    </tr>
                 {% endfor %}
             </tbody>
+            
         </table>
         </div>
     </div>

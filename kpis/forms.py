@@ -16,11 +16,13 @@ class KpiForm(forms.Form):
     name =  forms.CharField(max_length=100)
     module = forms.ModelChoiceField(queryset=Module.objects.all())
     record_selection = forms.ModelChoiceField(queryset=RecordSelection.objects.all())
-    points_per_record = forms.IntegerField()
-    recipient = forms.ModelChoiceField(queryset=Recipient.objects.all())
+    points_val_select = forms.BooleanField(label="Set custom value", required=False)
+    points_valueOfField = forms.BooleanField(label="Use value of the field as points", required=False)
+    points_per_record = forms.IntegerField(label="Set points per record", required=False)
+    # recipient = forms.ModelChoiceField(queryset=Recipient.objects.all())
     condition1 = forms.ChoiceField(label="Condition")
-    conditionOp = forms.ChoiceField(label=None)
-    condition2 = forms.ChoiceField(label=None, required=False)
+    conditionOp = forms.ChoiceField(label="")
+    condition2 = forms.ChoiceField(label="", required=False)
     condition2int = forms.IntegerField(required=False)
 
 class KpiModelForm(forms.ModelForm):
@@ -47,6 +49,7 @@ class KpiModelForm(forms.ModelForm):
         pass
 
     def __init__(self, *args, **kwargs):
+        user=kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         self.fields['condition1'].queryset = Condition1.objects.none()
         self.fields['condition2'].queryset = Condition2.objects.none()
