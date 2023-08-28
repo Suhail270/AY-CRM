@@ -20,10 +20,35 @@
 
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
   <script>
+    $('#kpiForm').on('submit', function() {
+      if ($("[name='condition1']").val() == null || $("[name='condition1']").val() === "") {
+        return true;
+      }
+      if ($("[name='conditionOp']").val() == null || $("[name='conditionOp']").val() === "") {
+        return false
+      }
+      if (!($("[name='condition2']").prop('disabled'))) {
+        if ($("[name='condition2']").val() == null || $("[name='condition2']").val() === "") {
+          return false;
+        } else {
+          return true;
+        }
+      }
+      if (!($("[name='condition2int']").prop('disabled'))) {
+        if ($("[name='condition2int']").val() == null || $("[name='condition2int']").val() === "") {
+          return false;
+        } else {
+          return true;
+        }
+      }
+      return false;
+    });
+    console.log($("[name='condition1']").val());
     $("[id='div_id_condition2']").hide()
     $("[id='div_id_condition2int']").hide()
     $("[id='div_id_points_per_record']").hide();
     $("[name='points_valueOfField']").prop('checked', true);
+    $("[id='div_id_conditionOp']").hide();
     function change_valueOfField() {
       if ($("[name='points_valueOfField']").is(":checked")) {
         $("[name='points_per_record']").prop('disabled', 'disabled');
@@ -67,6 +92,7 @@
       var url = $("#kpiForm").attr("data-url");
       var opUrl = $("#kpiForm").attr("op-url");
       var fieldId = $(this).find("option:selected").text();
+      //console.log($("[name='condition1']").val());
     
       $.ajax({
         url: opUrl,
@@ -77,21 +103,52 @@
         success: function (data) {
           $("[name='conditionOp']").html(data.h);
           if (data.foreign) {
-            $("[name='condition2']").prop('disabled', false)
-            $("[id='div_id_condition2']").show()
-            $("[name='condition2int']").prop('disabled', 'disabled')
-            $("[id='div_id_condition2int']").hide()
+            $("[name='condition2']").prop('disabled', false);
+            $("[id='div_id_condition2']").show();
+            $("[name='condition2int']").prop('disabled', 'disabled');
+            $("[id='div_id_condition2int']").hide();
             $("[name='points_val_select']").prop('checked', true);
             $("[name='points_valueOfField']").prop('disabled', true);
             $("[name='points_val_select']").prop('disabled', true);
+            if ($("[name='condition1']").val() == null || $("[name='condition1']").val() === "") {
+              console.log($("[name='condition1']").val());
+              $("[name='condition1']").prop('required', false);
+              $("[name='conditionOp']").prop('required', false);
+              $("[name='condition2']").prop('required', false);
+              $("[name='condition2int']").prop('required', false);
+              $("[id='div_id_condition2']").hide();
+              $("[id='div_id_condition2int']").hide();
+              $("[id='div_id_conditionOp']").hide();
+            } else {
+              $("[name='condition1']").prop('required', true);
+              $("[name='conditionOp']").prop('required', true);
+              $("[name='condition2']").prop('required', true);
+              $("[name='condition2int']").prop('required', false);
+              $("[id='div_id_conditionOp']").show();
+            }
             change_val_select()
           } else {
-            $("[name='condition2']").prop('disabled', 'disabled')
-            $("[id='div_id_condition2']").hide()
-            $("[name='condition2int']").prop('disabled', false)
-            $("[id='div_id_condition2int']").show()
+            $("[name='condition2']").prop('disabled', 'disabled');
+            $("[id='div_id_condition2']").hide();
+            $("[name='condition2int']").prop('disabled', false);
+            $("[id='div_id_condition2int']").show();
             $("[name='points_valueOfField']").prop('disabled', false);
             $("[name='points_val_select']").prop('disabled', false);
+            if ($("[name='condition1']").val() == null || $("[name='condition1']").val() === "") {
+              $("[name='condition1']").prop('required', false);
+              $("[name='conditionOp']").prop('required', false);
+              $("[name='condition2']").prop('required', false);
+              $("[name='condition2int']").prop('required', false);
+              $("[id='div_id_condition2']").hide();
+              $("[id='div_id_condition2int']").hide();
+              $("[id='div_id_conditionOp']").hide();
+            } else {
+              $("[name='condition1']").prop('required', true);
+              $("[name='conditionOp']").prop('required', true);
+              $("[name='condition2']").prop('required', false);
+              $("[name='condition2int']").prop('required', true);
+              $("[id='div_id_conditionOp']").show();
+            }
           }
         }
       });

@@ -20,10 +20,10 @@ class KpiForm(forms.Form):
     points_valueOfField = forms.BooleanField(label="Use value of the field as points", required=False)
     points_per_record = forms.IntegerField(label="Set points per record", required=False)
     # recipient = forms.ModelChoiceField(queryset=Recipient.objects.all())
-    condition1 = forms.ChoiceField(label="Condition")
-    conditionOp = forms.ChoiceField(label="")
+    condition1 = forms.ChoiceField(label="Condition", required=False)
+    conditionOp = forms.ChoiceField(label="", required= False)
     condition2 = forms.ChoiceField(label="", required=False)
-    condition2int = forms.IntegerField(required=False)
+    condition2int = forms.IntegerField(label="", required=False)
 
 class KpiModelForm(forms.ModelForm):
     # condition2 = None
