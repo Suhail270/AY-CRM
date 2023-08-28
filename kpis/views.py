@@ -1,3 +1,4 @@
+import json
 from typing import Any, Dict
 from django.shortcuts import render, reverse
 from django.contrib import messages
@@ -13,7 +14,7 @@ from .forms import (
     TargetModelForm
 )
 from django.db.models import ForeignKey
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.apps import apps
 
 def get_foreign(model, field_name):
@@ -359,7 +360,7 @@ class KpiCreateView(generic.FormView):
         return super(KpiCreateView, self).form_valid(form)
 
 class KpiUpdateViewNew(generic.FormView):
-    template_name = "kpis/kpi_create.html"
+    template_name = "kpis/kpi_update_new.html"
     form_class = KpiForm
 
     def get_success_url(self):
@@ -370,6 +371,22 @@ class KpiUpdateViewNew(generic.FormView):
         form = super().get_form(form_class)
 
         return form
+    
+    def get_context_data(self, *args, **kwargs: Any) -> Dict[str, Any]:
+        context = super(KpiUpdateViewNew, self).get_context_data(*args,**kwargs)
+        context['obj'] = json.dumps(model_to_dict(KPI.objects.get(pk=self.kwargs['pk'])))
+        print("#@#@#@#@")
+        print(context['obj'])
+        print("#@#@#@#@")
+        return context
+        
+    
+    def get(self, request, *args, **kwargs):
+        """Handle GET requests: instantiate a blank version of the form."""
+        print("@@@@@@")
+        print(self.kwargs)
+        print("@@@@@@")
+        return self.render_to_response(self.get_context_data())
     
     def post(self, request, *args, **kwargs):
         """
@@ -422,26 +439,45 @@ class KpiUpdateViewNew(generic.FormView):
         else:
             condition2 = form.cleaned_data["condition2"]
 
-        kpi = KPI(
-            name=name,
-            module=module,
-            record_selection=record_selection,
-            points_per_record=points_per_record,
-            # recipient=recipient,
-            condition1=Condition1.objects.get(pk=condition1),
-            conditionOp=ConditionOperator.objects.get(pk=conditionOp),
-            # conditionOp=conditionOp,
-            condition2=condition2,
-            points_valueOfField=points_valueOfField
-        )
+        # kpi = KPI.objects.get(pk=self.kwargs['pk'])
+
+        # print('HERE')
+        # print(model_to_dict(kpi))
+        # print(model_to_dict(module))
+        # print('HERE')
+
         user = self.request.user
         if user.is_organizer:
             organization = user.userprofile
         else:
             organization = user.agent.organization
-        kpi.organization = organization
-        kpi.save()
-        return super(KpiCreateView, self).form_valid(form)
+
+        KPI.objects.update_or_create(
+            pk=self.kwargs['pk'],
+            defaults={
+                'name': name,
+                'module': module,
+                'record_selection': record_selection,
+                'points_per_record': points_per_record,
+                'condition1': Condition1.objects.get(pk=condition1),
+                'conditionOp': ConditionOperator.objects.get(pk=conditionOp),
+                'condition2': condition2,
+                'points_valueOfField': points_valueOfField,
+                'organization': organization
+            }
+        )
+        
+        # kpi.name=name,
+        # kpi.module=Module.objects.get(pk=module.id),
+        # kpi.record_selection=record_selection,
+        # kpi.points_per_record=points_per_record,
+        # kpi.condition1=Condition1.objects.get(pk=condition1),
+        # kpi.conditionOp=ConditionOperator.objects.get(pk=conditionOp),
+        # kpi.condition2=condition2,
+        # kpi.points_valueOfField=points_valueOfField
+
+        # return super(KpiCreateView, self).form_valid(form)
+        return HttpResponseRedirect(self.get_success_url())
 
 class KpiUpdateView(generic.UpdateView):
     template_name = 'kpis/kpi_update.html'
