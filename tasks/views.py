@@ -320,7 +320,7 @@ class TaskUpdateView(LoginRequiredMixin, generic.UpdateView):
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         user = self.request.user
-        form.fields['lead'].querysey = Lead.objects.filter(
+        form.fields['lead'].queryset = Lead.objects.filter(
             organization=user.userprofile
         )
         form.fields['designated_agent'].queryset = UserProfile.objects.filter(

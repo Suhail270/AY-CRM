@@ -34,7 +34,7 @@ class TaskModelForm(forms.ModelForm):
         model = Task 
         fields = [
             "title",
-            # "lead",
+            "lead",
             "designated_agent",
             "deadline",
             "invitees",
