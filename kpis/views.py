@@ -174,7 +174,7 @@ def load_targets(request):
             if agent == None:
                 objects = module.objects.filter(**{record_select: cutoff})
             else:
-                objects = module.objects.filter(**{record_select: cutoff, 'agent': agent})
+                objects = module.objects.filter(**{record_select: cutoff, 'agent': Agent.objects.get(user=agent.user)})
         if kpi.points_valueOfField:
             value = 0
             for obj in objects:
