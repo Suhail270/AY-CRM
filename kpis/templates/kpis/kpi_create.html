@@ -50,8 +50,10 @@
     console.log($("[name='condition1']").val());
     $("[id='div_id_condition2']").hide()
     $("[id='div_id_condition2int']").hide()
-    $("[id='div_id_points_per_record']").hide();
-    $("[name='points_valueOfField']").prop('checked', true);
+    $("[id='div_id_points_per_record']").show();
+    $("[name='points_valueOfField']").prop('checked', false);
+    $("[name='points_valueOfField']").prop('disabled', 'disabled');
+    $("[name='points_val_select']").prop('checked', true);
     $("[id='div_id_conditionOp']").hide();
     function change_valueOfField() {
       if ($("[name='points_valueOfField']").is(":checked")) {
