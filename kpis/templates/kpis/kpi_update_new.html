@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% load tailwind_filters %}
+
+{% block content %}
+
+<div class="max-w-lg mx-auto">
+
+    <div class="py-5 border-b border-gray-200">
+        <a class="hover:text-blue-500" href="{% url 'kpis:kpi-list' %}">Go back to KPIs</a>
+    </div>
+
+    <h1 class="text-4xl text-gray-800">Edit KPI</h1>
+    <form method="post" id="kpiForm" data-url="{% url 'kpis:ajax_load_cond2' %}" module-url="{% url 'kpis:ajax_load_cond1' %}" op-url="{% url 'kpis:ajax_load_cond_op' %}" novalidate>
+        {% csrf_token %}
+        {{ form|crispy }}
+        <button type="submit" class="w-full text-white bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded-md">Submit</button>
+    </form>
+
+</div>
+
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <script>
+    $('#kpiForm').on('submit', function() {
+      if ($("[name='condition1']").val() == null || $("[name='condition1']").val() === "") {
+        return true;
+      }
+      if ($("[name='conditionOp']").val() == null || $("[name='conditionOp']").val() === "") {
+        alert("Missing codition operator");
+        return false;
+      }
+      if (!($("[name='condition2']").prop('disabled'))) {
+        if ($("[name='condition2']").val() == null || $("[name='condition2']").val() === "") {
+          alert("Missing condition value");
+          return false;
+        } else {
+          return true;
+        }
+      }
+      if (!($("[name='condition2int']").prop('disabled'))) {
+        if ($("[name='condition2int']").val() == null || $("[name='condition2int']").val() === "") {
+          return false;
+          alert("Missing condition value");
+        } else {
+          return true;
+        }
+      }
+      alert("Condition incomplete");
+      return false;
+    });
+    obj = JSON.parse('{{ obj|escapejs }}');
+    $("[id='div_id_condition2']").hide()
+    $("[id='div_id_condition2int']").hide()
+    $("[id='div_id_points_per_record']").hide();
+    $("[name='points_valueOfField']").prop('checked', true);
+    $("[id='div_id_conditionOp']").hide();
+    async function getCond1(url, moduleId) {
+      await $.ajax({
+        url: url,
+        data: {
+          'module': moduleId
+        },
+        success: function (data) {
+          $("[name='condition1']").html(data);
+          console.log($("[name='condition1']").html());
+        }
+      });
+      return
+    }
+    async function changeModule() {
+      var url = $("#kpiForm").attr("module-url");
+      var moduleId = $("[name='module']").find("option:selected").text();
+      console.log(moduleId);
+    
+      await getCond1(url, moduleId)
+
+    }
+    async function changeCond1() {
+      var url = $("#kpiForm").attr("data-url");
+      var opUrl = $("#kpiForm").attr("op-url");
+      var fieldId = $("[name='condition1']").find("option:selected").text();
+    
+      await $.ajax({
+        url: opUrl,
+        data: {
+          'field': fieldId,
+          'module': $("[name='module']").find("option:selected").text()
+        },
+        success: function (data) {
+          $("[name='conditionOp']").html(data.h);
+          if (data.foreign) {
+            $("[name='condition2']").prop('disabled', false);
+            $("[id='div_id_condition2']").show();
+            $("[name='condition2int']").prop('disabled', 'disabled');
+            $("[id='div_id_condition2int']").hide();
+            $("[name='points_val_select']").prop('checked', true);
+            $("[name='points_valueOfField']").prop('disabled', true);
+            $("[name='points_val_select']").prop('disabled', true);
+            if ($("[name='condition1']").val() == null || $("[name='condition1']").val() === "") {
+              console.log($("[name='condition1']").val());
+              $("[name='condition1']").prop('required', false);
+              $("[name='conditionOp']").prop('required', false);
+              $("[name='condition2']").prop('required', false);
+              $("[name='condition2int']").prop('required', false);
+              $("[id='div_id_condition2']").hide();
+              $("[id='div_id_condition2int']").hide();
+              $("[id='div_id_conditionOp']").hide();
+            } else {
+              $("[name='condition1']").prop('required', true);
+              $("[name='conditionOp']").prop('required', true);
+              $("[name='condition2']").prop('required', true);
+              $("[name='condition2int']").prop('required', false);
+              $("[id='div_id_conditionOp']").show();
+            }
+            change_val_select()
+          } else {
+            $("[name='condition2']").prop('disabled', 'disabled');
+            $("[id='div_id_condition2']").hide();
+            $("[name='condition2int']").prop('disabled', false);
+            $("[id='div_id_condition2int']").show();
+            $("[name='points_valueOfField']").prop('disabled', false);
+            $("[name='points_val_select']").prop('disabled', false);
+            if ($("[name='condition1']").val() == null || $("[name='condition1']").val() === "") {
+              $("[name='condition1']").prop('required', false);
+              $("[name='conditionOp']").prop('required', false);
+              $("[name='condition2']").prop('required', false);
+              $("[name='condition2int']").prop('required', false);
+              $("[id='div_id_condition2']").hide();
+              $("[id='div_id_condition2int']").hide();
+              $("[id='div_id_conditionOp']").hide();
+            } else {
+              $("[name='condition1']").prop('required', true);
+              $("[name='conditionOp']").prop('required', true);
+              $("[name='condition2']").prop('required', false);
+              $("[name='condition2int']").prop('required', true);
+              $("[id='div_id_conditionOp']").show();
+            }
+          }
+        }
+      });
+
+      await $.ajax({
+        url: url,
+        data: {
+          'field': fieldId,
+          'module': $("[name='module']").find("option:selected").text()
+        },
+        success: function (data) {
+          $("[name='condition2']").html(data);
+        }
+      });
+
+    }
+    async function changeCond2() {
+      console.log($("[name='condition2']").find("option:selected").text());
+      console.log($("[name='condition2']").val());
+    }
+    function change_valueOfField() {
+      if ($("[name='points_valueOfField']").is(":checked")) {
+        $("[name='points_per_record']").prop('disabled', 'disabled');
+        $("[id='div_id_points_per_record']").hide();
+        $("[name='points_val_select']").prop('checked', false);
+      } else {
+        $("[name='points_val_select']").prop('checked', true);
+        $("[name='points_valueOfField']").prop('checked', false);
+        $("[id='div_id_points_per_record']").show();
+        $("[name='points_per_record']").prop('disabled', false);
+      }
+    }
+    function change_val_select() {
+      if ($("[name='points_val_select']").is(":checked")){
+        $("[name='points_valueOfField']").prop('checked', false);
+        $("[id='div_id_points_per_record']").show();
+        $("[name='points_per_record']").prop('disabled', false);
+      } else {
+        $("[name='points_valueOfField']").prop('checked', true);
+        $("[id='div_id_points_per_record']").hide();
+      }
+    }
+    $("[name='points_valueOfField']").change(change_valueOfField);
+    $("[name='points_val_select']").change(change_val_select);
+    $("[name='module']").change(changeModule);
+    $("[name='condition1']").change(changeCond1);
+    $("[name='condition2']").change(changeCond2);
+
+    async function initAsync() {
+      $("[name='name']").val(obj.name);
+      $("[name='module']").val(obj.module);
+      await changeModule();
+      console.log($("[name='condition1']").html());
+      $("[name='record_selection']").val(obj.record_selection);
+      $("[name='points_valueOfField']").val(obj.points_valueOfField);
+      change_valueOfField();
+      change_val_select();
+      $("[name='condition1']").val(obj.condition1);
+      console.log(obj.condition1);
+      console.log($("[name='condition1']").val());
+      await changeCond1();
+      $("[name='points_valueOfField']").val(obj.points_valueOfField);
+      change_valueOfField();
+      change_val_select();
+      $("[name='points_per_record']").val(obj.points_per_record);
+      $("[name='conditionOp']").val(obj.conditionOp);
+      $("[name='condition2']").val(obj.condition2);
+      $("[name='condition2int']").val(obj.condition2);
+    }
+
+    initAsync();
+    
+  </script>
+
+{% endblock content %}

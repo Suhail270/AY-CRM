@@ -1,3 +1,4 @@
+import json
 from typing import Any, Dict
 from django.shortcuts import render, reverse
 from django.contrib import messages
@@ -13,11 +14,11 @@ from .forms import (
     TargetModelForm
 )
 from django.db.models import ForeignKey
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.apps import apps
 
 def get_foreign(model, field_name):
-    if field_name == "---------":
+    if field_name == "---------" or field_name == None:
         return None
     field = model._meta.get_field(field_name)
     field_type = type(field)
@@ -60,31 +61,36 @@ def load_list_contents(request):
     queryset = []
     for kpi in kpis:
         module = eval(kpi.module.option)
-        og_field = field = str(kpi.condition1)
-        print("OG FIRLED:", field)
-        if kpi.record_selection.option == "created":
-            record_select = "created_date__gte"
-        elif kpi.record_selection.option == "modified":
-            record_select = "last_updated_date__gte"
-        elif kpi.record_selection.option == "converted":
-            record_select = "converted_date__gte"
+        if kpi.condition1 != None:
+            og_field = field = str(kpi.condition1)
+            if kpi.record_selection.option == "created":
+                record_select = "created_date__gte"
+            elif kpi.record_selection.option == "modified":
+                record_select = "last_updated_date__gte"
+            elif kpi.record_selection.option == "converted":
+                record_select = "converted_date__gte"
 
-        if str(kpi.conditionOp) == "is":
-            model = get_foreign(module, field)
-            if model == None:
-                field_val = kpi.condition2
+            if str(kpi.conditionOp) == "is":
+                model = get_foreign(module, field)
+                if model == None:
+                    field_val = kpi.condition2
+                else:
+                    field_val = model.objects.get(pk=kpi.condition2)
             else:
-                field_val = model.objects.get(pk=kpi.condition2)
+                field_val = kpi.condition2
+                if str(kpi.conditionOp) == "greater than or equal to":
+                    field = field + "__gte"
+                elif str(kpi.conditionOp) == "lower than or equal to":
+                    field = field + "__lte"
+            if agent == None:
+                objects = module.objects.filter(**{field: field_val, record_select: cutoff})
+            else:
+                objects = module.objects.filter(**{field: field_val, record_select: cutoff, 'agent': agent})
         else:
-            field_val = kpi.condition2
-            if str(kpi.conditionOp) == "greater than or equal to":
-                field = field + "__gte"
-            elif str(kpi.conditionOp) == "lower than or equal to":
-                field = field + "__lte"
-        if agent == None:
-            objects = module.objects.filter(**{field: field_val, record_select: cutoff})
-        else:
-            objects = module.objects.filter(**{field: field_val, record_select: cutoff, 'agent': agent})
+            if agent == None:
+                objects = module.objects.filter(**{record_select: cutoff})
+            else:
+                objects = module.objects.filter(**{record_select: cutoff, 'agent': agent})
         if kpi.points_valueOfField:
             value = 0
             for obj in objects:
@@ -330,25 +336,45 @@ class KpiCreateView(generic.FormView):
         if points_per_record == 0 or points_per_record == None:
             points_per_record = 1
 
-        module_class = eval(module.option)
-        field = str(Condition1.objects.get(pk=condition1))
-        if get_foreign(module_class, field) == None:
-            condition2 = form.cleaned_data["condition2int"]
-        else:
-            condition2 = form.cleaned_data["condition2"]
 
-        kpi = KPI(
-            name=name,
-            module=module,
-            record_selection=record_selection,
-            points_per_record=points_per_record,
-            # recipient=recipient,
-            condition1=Condition1.objects.get(pk=condition1),
-            conditionOp=ConditionOperator.objects.get(pk=conditionOp),
-            # conditionOp=conditionOp,
-            condition2=condition2,
-            points_valueOfField=points_valueOfField
-        )
+        module_class = eval(module.option)
+        if condition1 != None and condition1 != "":
+            field = str(Condition1.objects.get(pk=condition1))
+            if get_foreign(module_class, field) == None:
+                condition2 = form.cleaned_data["condition2int"]
+            else:
+                condition2 = form.cleaned_data["condition2"]
+
+            print(condition1)
+            print(conditionOp)
+            print(condition2)
+
+            # if condition1 == None or condition1 == "" or conditionOp == None or condition2 == None:
+            #     condition1 == None
+            #     conditionOp == None
+            #     condition2 == None
+
+            kpi = KPI(
+                name=name,
+                module=module,
+                record_selection=record_selection,
+                points_per_record=points_per_record,
+                # recipient=recipient,
+                condition1=Condition1.objects.get(pk=condition1),
+                conditionOp=ConditionOperator.objects.get(pk=conditionOp),
+                # conditionOp=conditionOp,
+                condition2=condition2,
+                points_valueOfField=points_valueOfField
+            )
+        else:
+            kpi = KPI(
+                name=name,
+                module=module,
+                record_selection=record_selection,
+                points_per_record=points_per_record,
+                # recipient=recipient,
+                points_valueOfField=points_valueOfField
+            )
         user = self.request.user
         if user.is_organizer:
             organization = user.userprofile
@@ -359,7 +385,7 @@ class KpiCreateView(generic.FormView):
         return super(KpiCreateView, self).form_valid(form)
 
 class KpiUpdateViewNew(generic.FormView):
-    template_name = "kpis/kpi_create.html"
+    template_name = "kpis/kpi_update_new.html"
     form_class = KpiForm
 
     def get_success_url(self):
@@ -370,6 +396,22 @@ class KpiUpdateViewNew(generic.FormView):
         form = super().get_form(form_class)
 
         return form
+    
+    def get_context_data(self, *args, **kwargs: Any) -> Dict[str, Any]:
+        context = super(KpiUpdateViewNew, self).get_context_data(*args,**kwargs)
+        context['obj'] = json.dumps(model_to_dict(KPI.objects.get(pk=self.kwargs['pk'])))
+        print("#@#@#@#@")
+        print(context['obj'])
+        print("#@#@#@#@")
+        return context
+        
+    
+    def get(self, request, *args, **kwargs):
+        """Handle GET requests: instantiate a blank version of the form."""
+        print("@@@@@@")
+        print(self.kwargs)
+        print("@@@@@@")
+        return self.render_to_response(self.get_context_data())
     
     def post(self, request, *args, **kwargs):
         """
@@ -414,35 +456,65 @@ class KpiUpdateViewNew(generic.FormView):
 
         if points_per_record == 0 or points_per_record == None:
             points_per_record = 1
-
-        module_class = eval(module.option)
-        field = str(Condition1.objects.get(pk=condition1))
-        if get_foreign(module_class, field) == None:
-            condition2 = form.cleaned_data["condition2int"]
-        else:
-            condition2 = form.cleaned_data["condition2"]
-
-        kpi = KPI(
-            name=name,
-            module=module,
-            record_selection=record_selection,
-            points_per_record=points_per_record,
-            # recipient=recipient,
-            condition1=Condition1.objects.get(pk=condition1),
-            conditionOp=ConditionOperator.objects.get(pk=conditionOp),
-            # conditionOp=conditionOp,
-            condition2=condition2,
-            points_valueOfField=points_valueOfField
-        )
+        
         user = self.request.user
         if user.is_organizer:
             organization = user.userprofile
         else:
             organization = user.agent.organization
-        kpi.organization = organization
-        kpi.save()
-        return super(KpiCreateView, self).form_valid(form)
 
+        module_class = eval(module.option)
+
+        if condition1 != None and condition1 != "":   
+            field = str(Condition1.objects.get(pk=condition1))
+            if get_foreign(module_class, field) == None:
+                condition2 = form.cleaned_data["condition2int"]
+            else:
+                condition2 = form.cleaned_data["condition2"]
+
+            KPI.objects.update_or_create(
+                pk=self.kwargs['pk'],
+                defaults={
+                    'name': name,
+                    'module': module,
+                    'record_selection': record_selection,
+                    'points_per_record': points_per_record,
+                    'condition1': Condition1.objects.get(pk=condition1),
+                    'conditionOp': ConditionOperator.objects.get(pk=conditionOp),
+                    'condition2': condition2,
+                    'points_valueOfField': points_valueOfField,
+                    'organization': organization
+                }
+            )
+        else:
+            KPI.objects.update_or_create(
+                pk=self.kwargs['pk'],
+                defaults={
+                    'name': name,
+                    'module': module,
+                    'record_selection': record_selection,
+                    'points_per_record': points_per_record,
+                    'condition1': None,
+                    'conditionOp': None,
+                    'condition2': None,
+                    'points_valueOfField': points_valueOfField,
+                    'organization': organization
+                }
+            )
+        
+        # kpi.name=name,
+        # kpi.module=Module.objects.get(pk=module.id),
+        # kpi.record_selection=record_selection,
+        # kpi.points_per_record=points_per_record,
+        # kpi.condition1=Condition1.objects.get(pk=condition1),
+        # kpi.conditionOp=ConditionOperator.objects.get(pk=conditionOp),
+        # kpi.condition2=condition2,
+        # kpi.points_valueOfField=points_valueOfField
+
+        # return super(KpiCreateView, self).form_valid(form)
+        return HttpResponseRedirect(self.get_success_url())
+
+# deprecated
 class KpiUpdateView(generic.UpdateView):
     template_name = 'kpis/kpi_update.html'
     form_class = KpiModelForm
