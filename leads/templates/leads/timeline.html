@@ -3,6 +3,15 @@
 {% block content %}
 
 <h1 class="head">Timeline</h1>
+<div><p>{% if curr_lead.converted_date is NULL %}
+    Current Status : {{curr_lead.status}}<hr>
+    Last Modified : {{curr_lead.last_updated_date}}
+    {%endif%}
+    {% if curr_lead.converted_date is not NULL %}
+    Current Status : {{curr_opp.status}}<hr>
+    Last Modified : {{curr_opp.last_updated_date}}
+    {%endif%}
+</p></div>
 
             <div class = "container1">
                 <p>
