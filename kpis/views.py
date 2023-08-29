@@ -97,6 +97,7 @@ def load_list_contents(request):
                 value += getattr(obj, og_field)
         else:
             value = objects.count() * kpi.points_per_record
+        print(objects)
         dic = model_to_dict(kpi)
         dic['value'] = value
         # if value != 0:
@@ -144,31 +145,37 @@ def load_targets(request):
             period = 365
         cutoff = datetime.date.today() - datetime.timedelta(days=period)
         module = eval(kpi.module.option)
-        og_field = field = str(kpi.condition1)
-        if kpi.record_selection.option == "created":
-            record_select = "created_date__gte"
-        elif kpi.record_selection.option == "modified":
-            record_select = "last_updated_date__gte"
-        elif kpi.record_selection.option == "converted":
-            record_select = "converted_date__gte"
+        if kpi.condition1 != None:
+            og_field = field = str(kpi.condition1)
+            if kpi.record_selection.option == "created":
+                record_select = "created_date__gte"
+            elif kpi.record_selection.option == "modified":
+                record_select = "last_updated_date__gte"
+            elif kpi.record_selection.option == "converted":
+                record_select = "converted_date__gte"
 
-        
-        if str(kpi.conditionOp) == "is":
-            model = get_foreign(module, field)
-            if model == None:
-                field_val = kpi.condition2
+            
+            if str(kpi.conditionOp) == "is":
+                model = get_foreign(module, field)
+                if model == None:
+                    field_val = kpi.condition2
+                else:
+                    field_val = model.objects.get(pk=kpi.condition2)
             else:
-                field_val = model.objects.get(pk=kpi.condition2)
+                field_val = kpi.condition2
+                if str(kpi.conditionOp) == "greater than or equal to":
+                    field = field + "__gte"
+                elif str(kpi.conditionOp) == "lower than or equal to":
+                    field = field + "__lte"
+            if agent == None:
+                objects = module.objects.filter(**{field: field_val, record_select: cutoff})
+            else:
+                objects = module.objects.filter(**{field: field_val, record_select: cutoff, 'agent': Agent.objects.get(user=agent.user)})
         else:
-            field_val = kpi.condition2
-            if str(kpi.conditionOp) == "greater than or equal to":
-                field = field + "__gte"
-            elif str(kpi.conditionOp) == "lower than or equal to":
-                field = field + "__lte"
-        if agent == None:
-            objects = module.objects.filter(**{field: field_val, record_select: cutoff})
-        else:
-            objects = module.objects.filter(**{field: field_val, record_select: cutoff, 'agent': Agent.objects.get(user=agent.user)})
+            if agent == None:
+                objects = module.objects.filter(**{record_select: cutoff})
+            else:
+                objects = module.objects.filter(**{record_select: cutoff, 'agent': agent})
         if kpi.points_valueOfField:
             value = 0
             for obj in objects:
