@@ -38,7 +38,11 @@
                                 {% for agent in target.agents %}
                                 <li>{{ agent.user.email }}<li>
                                 {% empty %}
+                                {% if target.for_org %}
+                                <li>Organization</li>
+                                {% else %}
                                 <li>Unassigned<li>
+                                {% endif %}
                                 {% endfor %}
                             </ul>
                         </td>

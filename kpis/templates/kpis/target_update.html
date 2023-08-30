@@ -24,4 +24,20 @@
       </div>
     </div>
   </section>
+
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <script>
+    function changeForOrg() {
+      console.log($("[name='for_org']").is(":checked"))
+      if ($("[name='for_org']").is(":checked")) {
+        $("[name='agents']").prop('disabled', 'disabled');
+      } else {
+        $("[name='agents']").prop('disabled', false);
+      }
+      console.log($("[name='agents']"))
+
+    }
+    changeForOrg();
+    $("[name='for_org']").change(changeForOrg);
+</script>
 {% endblock content %}

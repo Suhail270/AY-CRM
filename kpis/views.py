@@ -6,7 +6,7 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 from django.template.loader import render_to_string
 import datetime
 from django.views import generic
-from leads.models import KPI, Targets, Lead, LeadSource, Agent, UserProfile, Module, Condition1, Condition2, ConditionOperator, Opportunities
+from leads.models import KPI, Targets, Lead, LeadSource, Agent, UserProfile, Module, Condition1, Condition2, ConditionOperator, Opportunities, User
 from django.forms.models import BaseModelForm, model_to_dict
 from .forms import (
     KpiModelForm,
@@ -107,6 +107,90 @@ def load_list_contents(request):
     return JsonResponse({"h": render_to_string(request=request, template_name='kpis/kpi_list_contents.html', context={"kpis": queryset, "is_agent": is_agent}), "is_agent": is_agent})
 
 
+# def load_targets(request):
+#     agent_id = int(request.GET.get("agent"))
+#     is_agent = False
+    
+#     if request.user.is_agent:
+#         agent = UserProfile.objects.get(user=request.user)
+#         is_agent = True
+#     else:
+#         if agent_id == -1:
+#             agent = None
+#         else:
+#             agent = UserProfile.objects.get(user=Agent.objects.get(pk=agent_id).user)
+    
+#     if request.user.is_organizer:
+#         organization = request.user.userprofile
+#     else:
+#         organization = request.user.agent.organization
+    
+#     if agent == None:
+#         targets = Targets.objects.filter(organization = organization)
+#     else:
+#         targets = Targets.objects.filter(organization = organization, agents = agent) | Targets.objects.filter(organization = organization, for_org = True)
+    
+#     queryset = []
+#     for target in targets:
+#         kpi = target.related_kpi
+#         period_str = target.time_period
+#         period = 0
+#         if period_str == "Daily":
+#             period = 1
+#         elif period_str == "Weekly":
+#             period = 7
+#         elif period_str == "Monthly":
+#             period = 30
+#         elif period_str == "Yearly":
+#             period = 365
+#         cutoff = datetime.date.today() - datetime.timedelta(days=period)
+#         module = eval(kpi.module.option)
+#         if kpi.record_selection.option == "created":
+#             record_select = "created_date__gte"
+#         elif kpi.record_selection.option == "modified":
+#             record_select = "last_updated_date__gte"
+#         elif kpi.record_selection.option == "converted":
+#             record_select = "converted_date__gte"
+#         if kpi.condition1 != None:
+#             og_field = field = str(kpi.condition1)
+            
+#             if str(kpi.conditionOp) == "is":
+#                 model = get_foreign(module, field)
+#                 if model == None:
+#                     field_val = kpi.condition2
+#                 else:
+#                     field_val = model.objects.get(pk=kpi.condition2)
+#             else:
+#                 field_val = kpi.condition2
+#                 if str(kpi.conditionOp) == "greater than or equal to":
+#                     field = field + "__gte"
+#                 elif str(kpi.conditionOp) == "lower than or equal to":
+#                     field = field + "__lte"
+#             if agent == None:
+#                 objects = module.objects.filter(**{field: field_val, record_select: cutoff})
+#             else:
+#                 objects = module.objects.filter(**{field: field_val, record_select: cutoff, 'agent': Agent.objects.get(user=agent.user)})
+#         else:
+#             if agent == None:
+#                 objects = module.objects.filter(**{record_select: cutoff})
+#             else:
+#                 objects = module.objects.filter(**{record_select: cutoff, 'agent': Agent.objects.get(user=agent.user)})
+#         if kpi.points_valueOfField:
+#             value = 0
+#             for obj in objects:
+#                 value += getattr(obj, og_field)
+#         else:
+#             value = objects.count() * kpi.points_per_record
+#         dic = model_to_dict(target)
+#         dic['score'] = value
+#         # if value != 0:
+#         queryset.append(dic)
+#     print(queryset)
+#     print(is_agent)
+    
+#     # return render(request, 'kpis/target_list_contents.html', {"targets": queryset, "is_agent": is_agent})
+#     return JsonResponse({"h": render_to_string(request=request, template_name='kpis/target_list_contents.html', context={"targets": queryset, "is_agent": is_agent}), "is_agent": is_agent})
+
 def load_targets(request):
     agent_id = int(request.GET.get("agent"))
     is_agent = False
@@ -132,6 +216,19 @@ def load_targets(request):
     
     queryset = []
     for target in targets:
+        if target.for_org:
+            agents_profiles = UserProfile.objects.filter(
+                user__is_agent = True
+            ).filter(user__agent__organization=organization)
+        else:
+            agents_profiles = target.agents.all()
+        agents = []
+        for profile in agents_profiles:
+            agents.append(Agent.objects.get(user=profile.user))
+        # print(agents_profiles)
+        # print(agent)
+        if agent != None and (agent not in agents_profiles):
+            continue
         kpi = target.related_kpi
         period_str = target.time_period
         period = 0
@@ -166,15 +263,9 @@ def load_targets(request):
                     field = field + "__gte"
                 elif str(kpi.conditionOp) == "lower than or equal to":
                     field = field + "__lte"
-            if agent == None:
-                objects = module.objects.filter(**{field: field_val, record_select: cutoff})
-            else:
-                objects = module.objects.filter(**{field: field_val, record_select: cutoff, 'agent': Agent.objects.get(user=agent.user)})
+            objects = module.objects.filter(**{field: field_val, record_select: cutoff, 'agent__in': agents})
         else:
-            if agent == None:
-                objects = module.objects.filter(**{record_select: cutoff})
-            else:
-                objects = module.objects.filter(**{record_select: cutoff, 'agent': Agent.objects.get(user=agent.user)})
+            objects = module.objects.filter(**{record_select: cutoff, 'agent__in': agents})
         if kpi.points_valueOfField:
             value = 0
             for obj in objects:
@@ -185,12 +276,9 @@ def load_targets(request):
         dic['score'] = value
         # if value != 0:
         queryset.append(dic)
-    print(queryset)
-    print(is_agent)
     
     # return render(request, 'kpis/target_list_contents.html', {"targets": queryset, "is_agent": is_agent})
     return JsonResponse({"h": render_to_string(request=request, template_name='kpis/target_list_contents.html', context={"targets": queryset, "is_agent": is_agent}), "is_agent": is_agent})
-
 
 def load_agents (request):
     if request.user.is_organizer:
@@ -594,7 +682,6 @@ class TargetCreateView(generic.CreateView):
     
     def get_form(self, form_class=TargetModelForm):
         
-        print("DEEEEEEEEEEZ")
         print(self.request.user)
         form = super().get_form(form_class)
 
