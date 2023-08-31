@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <section class="text-gray-700 body-font">
+        <div class="container px-5 py-24 mx-auto flex flex-wrap">
+            <div class="w-full mb-6 py-6 flex justify-between items-center border-b border-gray-200">
+                <div>
+                    <h1 class="text-4xl text-gray-800">KPIs</h1>
+                </div>
+                <div>
+                    <select id="selectPeriod" data-url="{% url 'kpis:ajax_load_list_contents' %}">
+                        <option value=7>Weekly</option>
+                        <option value=30>Monthly</option>
+                        <option value=365>Yearly</option>
+                    </select>
+                </div>
+                <div>
+                    <select id="selectAgent" data-url="{% url 'kpis:ajax_load_agents' %}">
+                        <option value=-1>Organization</option>
+                    </select>
+                </div>
+                <div>
+                    <a class="text-gray-500 hover:text-blue-500" href="{% url 'kpis:kpi-create' %}">Create a new KPI</a>
+                </div>
+            </div>
+
+            <div id="list-contents" class="flex flex-col w-full">
+                <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+                    <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Name
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Value
+                                </th>
+                                <th scope="col" class="relative px-6 py-3">
+                                <span class="sr-only">Edit</span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for kpi in kpis %}
+                                <tr class="bg-white">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        {{ kpi.name }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {{ kpi.value }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <a href="{% url 'kpis:kpi-update' kpi.pk %}" class="text-indigo-600 hover:text-indigo-900">
+                                            Edit
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% empty %}
+
+                            <p>There are currently no KPIs</p>
+
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+                </div>
+            </div>
+
+        </div>
+      </section>
+
+      <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+
+      <script>
+        function get_list() {
+            var url = $("#selectPeriod").attr("data-url");
+            var fieldId = $(this).find("option:selected").text();
+            var period = document.getElementById('selectPeriod').value
+            var agent = document.getElementById('selectAgent').value
+            $.ajax({
+              url: url,
+              data: {
+                'period': period,
+                'agent': agent
+              },
+              success: function (data) {
+                $("#list-contents").html(data.h);
+                if (data.is_agent) {
+                  $('#selectAgent').hide()
+                }
+              }
+            });
+        }
+        function get_agents() {
+            var url = $("#selectAgent").attr("data-url");
+            $.ajax({
+              url: url,
+              data: {},
+              success: function (data) {
+                $("#selectAgent").html(data);
+              }
+            });
+        }
+        get_agents();
+        get_list();
+        $("#selectPeriod").change(get_list);
+        $("#selectAgent").change(get_list);
+      </script>
+{% endblock content %}

@@ -1,5 +1,6 @@
 import logging
 import datetime
+from typing import Any, Dict
 from django import contrib
 from django.contrib import messages
 from django.core.mail import send_mail
@@ -9,7 +10,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
 from django.views import generic
 from agents.mixins import OrganizerAndLoginRequiredMixin
-from .models import Lead, Agent, Category, FollowUp, Parties
+from .models import Lead, Agent, Category, FollowUp, Parties ,Opportunities,UserProfile
 from .forms import (
     LeadForm, 
     LeadModelForm, 
@@ -17,8 +18,11 @@ from .forms import (
     AssignAgentForm, 
     LeadCategoryUpdateForm,
     CategoryModelForm,
-    FollowUpModelForm
+    FollowUpModelForm,
+    OpportunityModelForm,
+    OpportunityUpdateModelForm
 )
+from django.db.models import Q
 
 
 logger = logging.getLogger(__name__)
@@ -38,7 +42,11 @@ class LandingPageView(generic.TemplateView):
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
-            return redirect("dashboard")
+            if request.user.is_agent:
+                return redirect("leads:lead-list")
+            elif request.user.is_organizer:
+                return redirect("dashboard")
+
         return super().dispatch(request, *args, **kwargs)
 
 
@@ -117,6 +125,7 @@ class LeadListView(LoginRequiredMixin, generic.ListView):
             )
             # filter for the agent that is logged in
             queryset = queryset.filter(agent__user=user)
+            
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -160,20 +169,47 @@ class LeadCreateView(LoginRequiredMixin, generic.CreateView):
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         user = self.request.user
-        form.fields['status'].queryset = Category.objects.filter(
+
+        # Agent.objects.filter(user=user)[0].organization
+
+        if user.is_organizer:
+            form.fields['status'].queryset = Category.objects.filter(
             organization=user.userprofile
-        )
-        form.fields['agent'].queryset = Agent.objects.filter(
-            organization=user.userprofile
-        )
-        form.fields['party'].queryset = Parties.objects.filter(
-            organization=user.userprofile
-        )
+            )
+            form.fields['agent'].queryset = Agent.objects.filter(
+                organization=user.userprofile
+            )
+            form.fields['party'].queryset = Parties.objects.filter(
+                organization=user.userprofile
+            )
+        
+        else:
+            organization = Agent.objects.filter(user=user)[0].organization
+
+            form.fields['status'].queryset = Category.objects.filter(
+            organization=organization
+            )
+            form.fields['agent'].queryset = Agent.objects.filter(
+                user=user
+            )
+            form.fields['party'].queryset = Parties.objects.filter(
+                organization=organization
+            ).filter(Q(agent=Agent.objects.filter(user=user)[0]) | Q(agent=None))
+            
         return form
 
     def form_valid(self, form):
         lead = form.save(commit=False)
-        lead.organization = self.request.user.userprofile
+
+        if not self.request.user.is_organizer:
+            lead.organization = Agent.objects.filter(user=self.request.user)[0].organization
+            lead.agent = Agent.objects.filter(
+                user=self.request.user
+            )[0]
+        
+        else:
+            lead.organization = self.request.user.userprofile
+
         lead.save()
         send_mail(
             subject="A lead has been created",
@@ -191,7 +227,10 @@ class LeadUpdateView(LoginRequiredMixin, generic.UpdateView):
     def get_queryset(self):
         user = self.request.user
         # initial queryset of leads for the entire organization
-        return Lead.objects.filter(organization=user.userprofile)
+        if user.is_organizer:
+            return Lead.objects.filter(organization=user.userprofile)
+        else:
+            return Lead.objects.filter(organization=Agent.objects.filter(user=user)[0].organization)
 
     def get_success_url(self):
         return reverse("leads:lead-list")
@@ -199,15 +238,31 @@ class LeadUpdateView(LoginRequiredMixin, generic.UpdateView):
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         user = self.request.user
-        form.fields['status'].queryset = Category.objects.filter(
+        
+        if user.is_organizer:
+            form.fields['status'].queryset = Category.objects.filter(
             organization=user.userprofile
-        )
-        form.fields['agent'].queryset = Agent.objects.filter(
-            organization=user.userprofile
-        )
-        form.fields['party'].queryset = Parties.objects.filter(
-            organization=user.userprofile
-        )
+            )
+            form.fields['agent'].queryset = Agent.objects.filter(
+                organization=user.userprofile
+            )
+            form.fields['party'].queryset = Parties.objects.filter(
+                organization=user.userprofile
+            )
+        
+        else:
+            organization = Agent.objects.filter(user=user)[0].organization
+
+            form.fields['status'].queryset = Category.objects.filter(
+            organization=organization
+            )
+            form.fields['agent'].queryset = Agent.objects.filter(
+                user=user
+            )
+            form.fields['party'].queryset = Parties.objects.filter(
+                organization=organization
+            ).filter(Q(agent=Agent.objects.filter(user=user)[0]) | Q(agent=None))
+
         return form
 
     def form_valid(self, form):
@@ -219,7 +274,6 @@ class LeadUpdateView(LoginRequiredMixin, generic.UpdateView):
                 instance.last_updated_date = datetime.datetime.now()
         instance.save()
         return super(LeadUpdateView, self).form_valid(form)
-
 
 
 class LeadDeleteView(OrganizerAndLoginRequiredMixin, generic.DeleteView):
@@ -505,3 +559,339 @@ class LeadJsonView(generic.View):
         return JsonResponse({
             "qs": qs,
         })
+    
+
+# class OpportunityListView(LoginRequiredMixin, generic.ListView):
+#     template_name = "leads/opportunity_list.html"
+#     context_object_name = "opportunities"
+
+#     def get_queryset(self):
+#         user = self.request.user
+#         queryset = Lead.objects.filter(
+#             party__isnull = False,
+#             party__first_name__isnull = False,
+#             party__email__isnull = False,
+#             party__primary_number__isnull = False
+#         ) | Lead.objects.filter(
+#             party__isnull = False,
+#             party__first_name__isnull = False,
+#             party__email__isnull = False,
+#             party__whatsapp_number__isnull = False
+#         )
+#         self.create_queryOpportunities(queryset)
+#         queryset2 = Opportunities.objects.filter(
+#             party__isnull = False,
+#         )
+#         return queryset2
+    
+#     def create_queryOpportunities(self, queryset):
+#         for lead in queryset:
+#             existing_opportunity = Opportunities.objects.filter(
+#             name=lead.name,
+#             source=lead.source,
+#             status=lead.status,
+#             agent_id = lead.agent_id,
+#             organization_id = lead.organization_id,
+#             party_id = lead.party_id,
+#             source_id = lead.source_id          
+#         ).first()
+#             if not existing_opportunity:
+#                 # Create an Opportunity instance for each lead and set the relevant fields
+#                 opportunity = Opportunities()
+#                 opportunity.name = lead.name
+#                 opportunity.description = lead.description
+#                 opportunity.source = lead.source
+#                 opportunity.status = lead.status
+#                 opportunity.agent = lead.agent
+#                 opportunity.organization = lead.organization
+#                 opportunity.party = lead.party
+#                 opportunity.tenant_map_id = lead.tenant_map_id
+
+#                 # Save the Opportunity instance to the database
+#                 opportunity.save()
+
+class OpportunityListView(LoginRequiredMixin, generic.ListView):
+    template_name = "leads/opportunity_list.html"
+    context_object_name = "opportunities"
+
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of leads for the entire organization
+        if user.is_organizer:
+            queryset = Opportunities.objects.filter(
+                organization=user.userprofile, 
+                agent__isnull=False
+            )
+        else:
+            queryset = Opportunities.objects.filter(
+                organization=user.agent.organization, 
+                agent__isnull=False
+            )
+            # filter for the agent that is logged in
+            queryset = queryset.filter(agent__user=user)
+            
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super(OpportunityListView, self).get_context_data(**kwargs)
+        user = self.request.user
+        if user.is_organizer:
+            queryset = Opportunities.objects.filter(
+                organization=user.userprofile, 
+                agent__isnull=True
+            )
+            # context.update({
+            #     "unassigned_leads": queryset
+            # })
+        return context
+
+              
+
+class OpportunityConvertView(LoginRequiredMixin, generic.CreateView):
+    template_name = "leads/opportunity_convert.html"
+    form_class = OpportunityModelForm
+     
+    def get_initial(self):
+        curr_lead = Lead.objects.get(pk=self.kwargs["pk"])
+        name = curr_lead.name
+        description = curr_lead.description
+        status = Category.objects.get(name="Converted")
+        organization = curr_lead.organization
+        source = curr_lead.source
+        agent = curr_lead.agent
+        party = curr_lead.party
+        
+        return {
+            "name": name,
+            "description": description,
+            "status": Category.objects.get(name="Converted"),
+            "source": source,
+        }
+    def get_success_url(self):
+        return reverse("leads:lead-detail", kwargs={"pk": self.kwargs["pk"]})
+
+    def get_context_data(self, **kwargs):
+        context = super(OpportunityConvertView, self).get_context_data(**kwargs)
+        curr_lead = Lead.objects.get(pk=self.kwargs["pk"])
+        curr_party = curr_lead.party
+        context.update({
+
+            "name": curr_lead.name,
+            "description": curr_lead.description,
+            "status": Category.objects.get(name="Converted"),
+            "organization" : curr_lead.organization,
+            "source": curr_lead.source,
+            "agent": curr_lead.agent,
+            "party": curr_lead.party,
+            "converted_date" : datetime.datetime.now,
+            "tenant_map_id" : curr_lead.tenant_map_id,
+            "original_lead": curr_lead,
+            
+        })
+        return context
+
+    def form_valid(self, form):
+        curr_lead = Lead.objects.get(pk=self.kwargs["pk"])
+        opportunity = form.save(commit=False)
+        opportunity.name = curr_lead.name
+        opportunity.description = curr_lead.description
+        opportunity.status = Category.objects.get(name="Converted")
+        opportunity.organization = curr_lead.organization
+        opportunity.source = curr_lead.source
+        opportunity.agent = curr_lead.agent
+        opportunity.party = curr_lead.party
+        opportunity.tenant_map_id = curr_lead.tenant_map_id
+        opportunity.converted_date = datetime.datetime.now()
+        opportunity.original_lead = curr_lead
+        opportunity.save()
+        user = self.request.user
+        converted_category = Category.objects.get(name="Converted")
+        curr_lead.status = converted_category
+        curr_lead.converted_date = datetime.datetime.now()
+        curr_lead.save()
+        return super(OpportunityConvertView, self).form_valid(form)
+
+   
+class OpportunityUpdateView(LoginRequiredMixin, generic.UpdateView):
+    template_name = "leads/opportunity_update.html"
+    form_class = OpportunityUpdateModelForm
+    context_object_name = "opportunities"
+
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of leads for the entire organization
+        queryset = Opportunities.objects.all()
+        if user.is_agent:
+            queryset = queryset.filter(agent=Agent.objects.get(user = user))
+        return queryset
+    
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        user = self.request.user
+        return form
+
+    def get_success_url(self):
+        return reverse("leads:opportunity-list")
+
+    def form_valid(self, form):
+        updatedTask = self.get_object()
+        instance = form.save(commit=False)
+        messages.info(self.request, "You have successfully updated this opportunity")
+        if instance.last_updated_date != datetime.datetime.now():
+            instance.last_updated_date = datetime.datetime.now()
+        instance.save()
+        return super(OpportunityUpdateView, self).form_valid(form)
+
+class OpportunityDetailView(LoginRequiredMixin, generic.DetailView):
+    template_name = "leads/opportunity_detail.html"
+    context_object_name = "opportunity"
+
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of leads for the entire organization
+        if user.is_organizer:
+            queryset = Opportunities.objects.filter(organization=user.userprofile)
+        else:
+            queryset = Opportunities.objects.filter(organization=user.agent.organization)
+            # filter for the agent that is logged in
+            queryset = queryset.filter(agent__user=user)
+        return queryset
+
+class OppFollowUpCreateView(LoginRequiredMixin, generic.CreateView):
+    template_name = "leads/followup_create.html"
+    form_class = FollowUpModelForm
+
+    def get_success_url(self):
+        return reverse("leads:opportunity-detail", kwargs={"pk": self.kwargs["pk"]})
+
+    def get_context_data(self, **kwargs):
+        context = super(OppFollowUpCreateView, self).get_context_data(**kwargs)
+        context.update({
+            "opportunity": Opportunities.objects.get(pk=self.kwargs["pk"])
+        })
+        return context
+
+    def form_valid(self, form):
+        opportunity = Opportunities.objects.get(pk=self.kwargs["pk"])
+        followup = form.save(commit=False)
+        followup.opportunity = opportunity
+        followup.save()
+        return super(OppFollowUpCreateView, self).form_valid(form)
+
+
+class OppFollowUpUpdateView(LoginRequiredMixin, generic.UpdateView):
+    template_name = "leads/followup_update.html"
+    form_class = FollowUpModelForm
+
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of leads for the entire organization
+        if user.is_organizer:
+            queryset = FollowUp.objects.filter(opportunity__organization=user.userprofile)
+        else:
+            queryset = FollowUp.objects.filter(opportunity__organization=user.agent.organization)
+            # filter for the agent that is logged in
+            queryset = queryset.filter(opportunity__agent__user=user)
+        return queryset
+
+    def get_success_url(self):
+        return reverse("leads:opportunity-detail", kwargs={"pk": self.get_object().opportunity.id})
+
+
+class TimelineView(LoginRequiredMixin, generic.TemplateView):
+
+    template_name = "leads/timeline.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(TimelineView, self).get_context_data(**kwargs)
+
+        user = self.request.user
+
+        if user.is_organizer:
+            queryset = Lead.objects.filter(
+                organization=user.userprofile, 
+                agent__isnull=False
+            )
+        else:
+            queryset = Lead.objects.filter(
+                organization=user.agent.organization, 
+                agent__isnull=False
+            )
+
+        # How many leads we have in total
+        if user.is_organizer:
+            curr_lead = queryset.filter(organization=user.userprofile, id = self.kwargs["pk"]).first()
+        else :
+            curr_lead = queryset.filter(agent=user.agent, id = self.kwargs["pk"]).first()
+        
+        curr_opp = None
+        if curr_lead.converted_date is not None:
+            print("not none")
+            if user.is_organizer:
+                curr_opp = Opportunities.objects.filter(
+                    organization=user.userprofile, 
+                    agent__isnull=False,
+                    original_lead = curr_lead,
+                ).first()
+            else:
+                curr_opp = Opportunities.objects.filter(
+                    agent=user.agent, 
+                    agent__isnull=False,
+                    original_lead = curr_lead,
+                ).first()
+
+
+        
+
+    
+
+        context.update({
+            "curr_lead": curr_lead,
+            "qs": Category.objects.filter(organization__exact=user.userprofile),
+            "curr_opp": curr_opp
+        })
+        return context
+ 
+class OppTimelineView(LoginRequiredMixin, generic.TemplateView):
+
+    template_name = "leads/timeline.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(OppTimelineView, self).get_context_data(**kwargs)
+
+        user = self.request.user
+
+        if user.is_organizer:
+            queryset = Opportunities.objects.filter(
+                organization=user.userprofile, 
+                agent__isnull=False
+            )
+        else:
+            queryset = Opportunities.objects.filter(
+                organization=user.agent.organization, 
+                agent__isnull=False
+            )
+
+        # How many leads we have in total
+        curr_opp = None
+        curr_lead = None
+        if user.is_organizer:
+            curr_opp = queryset.filter(organization=user.userprofile, id = self.kwargs["pk"]).first()
+            curr_lead = curr_opp.original_lead      
+
+        else :
+            curr_opp = queryset.filter(agent=user.agent, id = self.kwargs["pk"]).first()
+            curr_lead = curr_opp.original_lead    
+
+
+        
+
+    
+
+        context.update({
+            "curr_lead": curr_lead,
+            "qs": Category.objects.filter(organization__exact=user.userprofile),
+            "curr_opp": curr_opp
+        })
+        return context
+ 

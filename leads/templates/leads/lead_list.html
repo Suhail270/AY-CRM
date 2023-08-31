@@ -11,13 +11,13 @@
                     View categories
                 </a>
             </div>
-            {% if request.user.is_organizer %}
+            {% comment %} {% if request.user.is_organizer %} {% endcomment %}
             <div>
                 <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:lead-create' %}">
                     Create a new lead
                 </a>
             </div>
-            {% endif %}
+            {% comment %} {% endif %} {% endcomment %}
         </div>
 
         <div class="flex flex-col w-full">
@@ -52,6 +52,7 @@
                     </thead>
                     <tbody>
                         {% for lead in leads %}
+                        {% if lead.status.name != "Converted" %}
                             <tr class="bg-white">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                     <a class="text-blue-500 hover:text-blue-800" href="{% url 'leads:lead-detail' lead.pk %}">{{ lead.name }}</a>
@@ -69,14 +70,22 @@
                                     {{ lead.agent }}
                                 </td>
                                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <a class="text-blue-500 hover:text-blue-800" href="{% url 'parties:party-detail' lead.pk %}">{{ lead.party }}</a>
+                                    {% if lead.party %}
+                                    <a class="text-blue-500 hover:text-blue-800" href="{% url 'parties:party-detail' lead.party.pk %}">{{ lead.party }}</a>
+                                    {% endif %}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <a href="{% url 'leads:lead-update' lead.pk %}" class="text-indigo-600 hover:text-indigo-900">
                                         Edit
                                     </a>
                                 </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <a href="{% url 'leads:opportunity-convert' lead.pk %}" class="text-indigo-600 hover:text-indigo-900">
+                                        Convert
+                                    </a>
+                                </td>
                             </tr>
+                            {% endif %}
 
                         {% empty %}
 
@@ -86,6 +95,78 @@
                     </tbody>
                 </table>
                 </div>
+                <div class="w-full mb-6 py-6 flex justify-between items-center border-b border-gray-200">
+                    <h3 class="text-3xl text-gray-500">Converted Leads</h3>
+                </div>
+                <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Name
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Description
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Source
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Status
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Agent
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Party
+                                </th>
+                                <th scope="col" class="relative px-6 py-3">
+                                <span class="sr-only">Edit</span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for lead in leads %}
+                                {% if lead.status.name == "Converted" %}
+                                    <tr class="bg-white">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        <a class="text-blue-500 hover:text-blue-800" href="{% url 'leads:lead-detail' lead.pk %}">{{ lead.name }}</a>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {{ lead.description }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {{ lead.source }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {{ lead.status }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {{ lead.agent }}
+                                    </td>
+                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {%if lead.party%}
+                                        <a class="text-blue-500 hover:text-blue-800" href="{% url 'parties:party-detail' lead.party.pk  %}">{{ lead.party }}</a>
+                                        {%endif%}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <a href="{% url 'leads:lead-update' lead.pk %}" class="text-indigo-600 hover:text-indigo-900">
+                                            Edit
+                                        </a>
+                                    </td>
+                                    
+                                    </tr>
+                                {% endif %}
+    
+                            {% empty %}
+    
+                            <p>There are currently no leads</p>
+    
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    </div>
+                    
             </div>
             </div>
         </div>

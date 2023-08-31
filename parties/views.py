@@ -70,7 +70,7 @@ class PartyDetailView(LoginRequiredMixin, generic.DetailView):
             queryset = queryset.filter(agent__user=user)
         return queryset
 
-class PartyCreateView(OrganizerAndLoginRequiredMixin, generic.CreateView):
+class PartyCreateView(LoginRequiredMixin, generic.CreateView):
     template_name = "parties/party_create.html"
     form_class = PartyModelForm
 
@@ -80,14 +80,27 @@ class PartyCreateView(OrganizerAndLoginRequiredMixin, generic.CreateView):
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         user = self.request.user
-        form.fields['agent'].queryset = Agent.objects.filter(
+        if user.is_organizer:
+            form.fields['agent'].queryset = Agent.objects.filter(
             organization=user.userprofile
-        )
+        )   
+        else:
+            form.fields['agent'].queryset = Agent.objects.filter(user=user)
+            
         return form
 
     def form_valid(self, form):
         party = form.save(commit=False)
-        party.organization = self.request.user.userprofile
+
+        if not self.request.user.is_organizer:
+            party.organization = Agent.objects.filter(user=self.request.user)[0].organization
+            party.agent = Agent.objects.filter(
+                user=self.request.user
+            )[0]
+        
+        else:
+            party.organization = self.request.user.userprofile
+
         party.save()
         send_mail(
             subject="A party has been created",
@@ -99,7 +112,7 @@ class PartyCreateView(OrganizerAndLoginRequiredMixin, generic.CreateView):
         return super(PartyCreateView, self).form_valid(form)
 
 
-class PartyUpdateView(OrganizerAndLoginRequiredMixin, generic.UpdateView):
+class PartyUpdateView(LoginRequiredMixin, generic.UpdateView):
     template_name = "parties/party_update.html"
     form_class = PartyModelForm
     context_object_name = "party"
@@ -107,14 +120,22 @@ class PartyUpdateView(OrganizerAndLoginRequiredMixin, generic.UpdateView):
     def get_queryset(self):
         user = self.request.user
         # initial queryset of leads for the entire organization
-        return Parties.objects.filter(organization=user.userprofile)
+        if user.is_organizer:
+            return Parties.objects.filter(organization=user.userprofile)
+        else:
+            return Parties.objects.filter(organization=Agent.objects.filter(user=user)[0].organization)
     
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         user = self.request.user
-        form.fields['agent'].queryset = Agent.objects.filter(
+        
+        if user.is_organizer:
+            form.fields['agent'].queryset = Agent.objects.filter(
             organization=user.userprofile
-        )
+        )   
+        else:
+            form.fields['agent'].queryset = Agent.objects.filter(user=user)
+
         return form
 
     def get_success_url(self):
@@ -123,6 +144,13 @@ class PartyUpdateView(OrganizerAndLoginRequiredMixin, generic.UpdateView):
     def form_valid(self, form):
         party_before_update = self.get_object()
         instance = form.save(commit=False)
+
+        if not self.request.user.is_organizer:
+            instance.agent = Agent.objects.filter(
+                user=self.request.user
+            )[0]
+        
+
         messages.info(self.request, "You have successfully updated this party")
         if party_before_update.last_updated_date != datetime.datetime.now():
                 # this lead has now been converted

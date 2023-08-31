@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load tailwind_filters %}
+
+{% block content %}
+
+<div class="max-w-lg mx-auto">
+
+    <div class="py-5 border-b border-gray-200">
+        <a class="hover:text-blue-500" href="{% url 'kpis:target-list' %}">Go back to Targets</a>
+    </div>
+
+    <h1 class="text-4xl text-gray-800">Create a new Target</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <button type="submit" class="w-full text-white bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded-md">Submit</button>
+    </form>
+
+</div>
+
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <script>
+    $("[name='for_org']").change(function () {
+      console.log($("[name='for_org']").is(":checked"))
+      if ($("[name='for_org']").is(":checked")) {
+        $("[name='agents']").prop('disabled', 'disabled');
+      } else {
+        $("[name='agents']").prop('disabled', false);
+      }
+      console.log($("[name='agents']"))
+
+    });
+</script>
+
+{% endblock content %}

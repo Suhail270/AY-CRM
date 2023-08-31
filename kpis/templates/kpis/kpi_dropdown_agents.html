@@ -1,0 +1,4 @@
+<option value=-1>Organization</option>
+{% for agent in agents %}
+<option value="{{ agent.id }}">{{ agent.str }}</option>
+{% endfor %}
