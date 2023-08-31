@@ -42,7 +42,11 @@ class LandingPageView(generic.TemplateView):
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
-            return redirect("dashboard")
+            if request.user.is_agent:
+                return redirect("leads:lead-list")
+            elif request.user.is_organizer:
+                return redirect("dashboard")
+
         return super().dispatch(request, *args, **kwargs)
 
 
