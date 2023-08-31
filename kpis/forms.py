@@ -82,20 +82,14 @@ class TargetModelForm(forms.ModelForm):
     #     pass
 
     def __init__(self, *args, **kwargs):
-        print("HEEEEREREREERE")
         self.user = kwargs.pop('user', None)
         user_var = self.user
-        print("#########")
-        # print(self.user)
-        # print(self.user.userprofile)
-        print("########!")
         super(TargetModelForm, self).__init__(*args, **kwargs)
         self.fields['for_org'].label = "for entire organization?"
         agent_queryset = UserProfile.objects.filter(
             user__is_agent = True
         ).filter(user__agent__organization=user_var.userprofile)
         self.fields['agents'].queryset = agent_queryset
-        print("hereherehereherehereheerehere")
         # if self.user.is_organizer:
         #     # form.fields['agents'].queryset = UserProfile.objects.filter(
         #     #     user__is_agent = True
